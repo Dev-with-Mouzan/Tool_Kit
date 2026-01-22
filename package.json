@@ -11,7 +11,8 @@
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up",
     "docker:down": "docker-compose down",
-    "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
+    "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d",
+    "build": "echo 'Frontend is static, no build needed'"
   },
   "keywords": [
     "pdf-converter",
@@ -22,16 +23,14 @@
     "online-tools",
     "web-utilities"
   ],
-  "author": "",
+  "author": "Dev-with-Mouzan",
   "license": "MIT",
-  "type": "commonjs",
-  "dependencies": {
-    "docx": "^9.5.1"
-  },
+  "private": true,
+  "dependencies": {},
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/Dev-with-Mouzan/Tool_Kit.git"
   },
   "engines": {
     "node": ">=14.0.0",
