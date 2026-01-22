@@ -33,7 +33,7 @@
     "url": "https://github.com/Dev-with-Mouzan/Tool_Kit.git"
   },
   "engines": {
-    "node": "20.x",
+    "node": "24.x",
     "python": ">=3.9.0"
   }
 }
