@@ -1,10 +1,22 @@
 // API Configuration
-// Set your backend URL here
-const API_BASE_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5000'
-    : 'https://toolkit-production-2bdc.up.railway.app';
+// Determine backend URL based on environment
+let API_BASE_URL;
 
-console.log('API_BASE_URL:', API_BASE_URL);
+// If running on Vercel production domain, use Railway backend
+if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('tool-kit')) {
+    API_BASE_URL = 'https://toolkit-production-2bdc.up.railway.app';
+}
+// If running locally, use local backend
+else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    API_BASE_URL = 'http://localhost:5000';
+}
+// Default to Railway for any other domain
+else {
+    API_BASE_URL = 'https://toolkit-production-2bdc.up.railway.app';
+}
+
+console.log('🌐 Environment:', window.location.hostname);
+console.log('🔗 API_BASE_URL:', API_BASE_URL);
 
 // Test backend connectivity
 async function testBackendConnection() {
