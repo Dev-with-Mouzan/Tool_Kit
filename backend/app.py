@@ -5,20 +5,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse, FileResponse
 from starlette.background import BackgroundTask
 import requests
-# Import yt_dlp immediately as it doesn't need to download models
 import yt_dlp
 from dotenv import load_dotenv
 
-# Lazy import rembg - it downloads a model on first use
-# This prevents startup timeout issues
-remove = None
-
-def get_remove_bg():
-    global remove
-    if remove is None:
-        from rembg import remove as rembg_remove
-        remove = rembg_remove
-    return remove
+# Try to import rembg, but don't fail if it's not available yet
+try:
+    from rembg import remove as rembg_remove
+    REMBG_AVAILABLE = True
+except Exception as e:
+    print(f"⚠️ Warning: rembg not available yet: {e}")
+    REMBG_AVAILABLE = False
+    rembg_remove = None
 
 load_dotenv()
 
@@ -69,26 +66,49 @@ async def test():
     """Simple test endpoint"""
     return {"status": "ok", "message": "Backend is working!"}
 
+@app.get("/warm-up")
+async def warm_up():
+    """Warm up the rembg model - call this once after deployment"""
+    global REMBG_AVAILABLE, rembg_remove
+    
+    if REMBG_AVAILABLE and rembg_remove is not None:
+        return {"status": "ready", "message": "rembg is already loaded"}
+    
+    try:
+        print("🔥 Loading rembg model...")
+        from rembg import remove as rembg_remove_new
+        rembg_remove = rembg_remove_new
+        REMBG_AVAILABLE = True
+        print("✅ rembg model loaded successfully")
+        return {"status": "warmed up", "message": "rembg model is now loaded"}
+    except Exception as e:
+        print(f"❌ Error loading rembg: {e}")
+        return {"status": "error", "message": str(e)}
+
 @app.post("/remove-bg")
 async def remove_bg(image: UploadFile = File(...)):
     if not image:
         raise HTTPException(status_code=400, detail="No image file provided")
     
+    if not REMBG_AVAILABLE or rembg_remove is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Background removal service is starting. Please try again in 30 seconds."
+        )
+    
     try:
         # Read file data
         image_data = await image.read()
         
-        # Lazy load rembg function (downloads model on first use)
-        remove_func = get_remove_bg()
-        
         # Process image with rembg
-        result_content = remove_func(image_data)
+        result_content = rembg_remove(image_data)
         
         # Return result as image bytes directly
         return Response(content=result_content, media_type="image/png")
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error in remove_bg: {e}")
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 @app.get("/yt-info")
 async def yt_info(url: str):
