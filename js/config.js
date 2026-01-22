@@ -25,19 +25,33 @@ console.log('🌐 Environment:', hostname);
 console.log('🔗 API_BASE_URL:', API_BASE_URL);
 console.log('⏰ Timestamp:', new Date().toISOString());
 
-// Test backend connectivity
+// Test backend connectivity with timeout
 async function testBackendConnection() {
     try {
-        const response = await fetch(`${API_BASE_URL}/health`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        console.log('🔄 Testing backend connection...');
+        const response = await fetch(`${API_BASE_URL}/health`, {
+            signal: controller.signal,
+            mode: 'cors'
+        });
+        clearTimeout(timeoutId);
+        
         if (response.ok) {
-            console.log('✅ Backend is online');
+            const data = await response.json();
+            console.log('✅ Backend is online:', data);
             return true;
         } else {
-            console.error('❌ Backend returned status:', response.status);
+            console.warn('⚠️ Backend returned status:', response.status);
             return false;
         }
     } catch (error) {
-        console.error('❌ Backend connection failed:', error.message);
+        if (error.name === 'AbortError') {
+            console.error('❌ Backend connection timeout - taking too long');
+        } else {
+            console.error('❌ Backend connection failed:', error.message);
+        }
         return false;
     }
 }
