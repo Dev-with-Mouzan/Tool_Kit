@@ -46,7 +46,8 @@ app.add_middleware(
 
 @app.get("/health")
 async def health():
-    return {"status": "running", "message": "Backend is online"}
+    """Health check endpoint"""
+    return {"status": "running", "message": "Backend is online and healthy"}
 
 @app.get("/test")
 async def test():
