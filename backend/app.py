@@ -26,22 +26,28 @@ def sanitize_filename(filename):
 
 app = FastAPI()
 
-# Enable CORS
+# Enable CORS with explicit preflight handling
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://localhost:8000",
+        "http://localhost:8000", 
         "http://localhost:5000",
         "https://tool-kit-silk.vercel.app",
         "https://*.vercel.app",
         "*"
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
-    max_age=3600,
+    max_age=86400,
+    expose_headers=["*"],
 )
+
+@app.options("/{full_path:path}")
+async def preflight_handler(full_path: str):
+    """Handle CORS preflight requests"""
+    return {"status": "ok"}
 
 @app.get("/health")
 async def health():
