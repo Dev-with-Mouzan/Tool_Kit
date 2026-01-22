@@ -31,6 +31,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Start the application - use PORT env var from Railway
 CMD ["sh", "-c", "gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:${PORT:-8080} --access-logfile - --error-logfile -"]
-
-# Run the application
-CMD ["python", "app.py"]
