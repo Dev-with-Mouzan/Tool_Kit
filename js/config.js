@@ -2,7 +2,7 @@
 // Set your backend URL here
 const API_BASE_URL = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000'
-    : 'https://your-railway-backend-url.railway.app'; // Replace with your Railway URL
+    : 'https://toolkit-production-2bdc.up.railway.app';
 
 // Helper function for API calls
 async function apiCall(endpoint, options = {}) {
