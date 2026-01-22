@@ -73,10 +73,15 @@ async function processImage() {
 
     } catch (err) {
         console.error("BG Removal Error:", err);
+        console.error("API Base URL:", API_BASE_URL);
         loading.classList.add('hidden');
         if (processBtn) processBtn.classList.remove('hidden');
 
-        statusMsg.textContent = "Error: " + (err.message || "Failed to process image.");
+        let errorMessage = err.message || "Failed to process image.";
+        if (err.message.includes("Failed to fetch")) {
+            errorMessage = "Backend connection failed. Make sure Railway backend is running.";
+        }
+        statusMsg.textContent = "Error: " + errorMessage;
         statusMsg.className = "text-sm text-red-400 block mt-2 font-bold";
     }
 }
