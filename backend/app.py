@@ -5,9 +5,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse, FileResponse
 from starlette.background import BackgroundTask
 import requests
-from rembg import remove
+# Import yt_dlp immediately as it doesn't need to download models
 import yt_dlp
 from dotenv import load_dotenv
+
+# Lazy import rembg - it downloads a model on first use
+# This prevents startup timeout issues
+remove = None
+
+def get_remove_bg():
+    global remove
+    if remove is None:
+        from rembg import remove as rembg_remove
+        remove = rembg_remove
+    return remove
 
 load_dotenv()
 
@@ -62,8 +73,11 @@ async def remove_bg(image: UploadFile = File(...)):
         # Read file data
         image_data = await image.read()
         
+        # Lazy load rembg function (downloads model on first use)
+        remove_func = get_remove_bg()
+        
         # Process image with rembg
-        result_content = remove(image_data)
+        result_content = remove_func(image_data)
         
         # Return result as image bytes directly
         return Response(content=result_content, media_type="image/png")
