@@ -87,27 +87,36 @@ async def warm_up():
 
 @app.post("/remove-bg")
 async def remove_bg(image: UploadFile = File(...)):
+    print(f"📥 Received upload request: {image.filename}")
+    
     if not image:
         raise HTTPException(status_code=400, detail="No image file provided")
     
     if not REMBG_AVAILABLE or rembg_remove is None:
+        print("⚠️ rembg not available yet")
         raise HTTPException(
             status_code=503, 
             detail="Background removal service is starting. Please try again in 30 seconds."
         )
     
     try:
+        print(f"🔄 Processing image: {image.filename}")
         # Read file data
         image_data = await image.read()
+        print(f"✓ Image data read: {len(image_data)} bytes")
         
         # Process image with rembg
+        print("🎨 Removing background...")
         result_content = rembg_remove(image_data)
+        print(f"✓ Background removed: {len(result_content)} bytes")
         
         # Return result as image bytes directly
         return Response(content=result_content, media_type="image/png")
 
     except Exception as e:
-        print(f"Error in remove_bg: {e}")
+        print(f"❌ Error in remove_bg: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 @app.get("/yt-info")

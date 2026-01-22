@@ -31,17 +31,27 @@ document.addEventListener('DOMContentLoaded', () => {
 // Helper function for API calls
 async function apiCall(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+    
+    // Don't add default headers for FormData - let browser set Content-Type with boundary
     const defaultOptions = {
-        headers: {
+        headers: options.body instanceof FormData ? {} : {
             'Accept': 'application/json',
         }
     };
     
     console.log('Making API call to:', url);
+    console.log('Request options:', { ...defaultOptions, ...options });
     
     try {
         const response = await fetch(url, { ...defaultOptions, ...options });
         console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
         return response;
     } catch (error) {
         console.error('Fetch error:', error);
