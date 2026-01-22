@@ -1,22 +1,29 @@
-// API Configuration
+// API Configuration v2 - FORCE CACHE BUST
 // Determine backend URL based on environment
 let API_BASE_URL;
 
+const hostname = window.location.hostname;
+console.log('🔍 Hostname detected:', hostname);
+
 // If running on Vercel production domain, use Railway backend
-if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('tool-kit')) {
+if (hostname.includes('vercel.app')) {
     API_BASE_URL = 'https://toolkit-production-2bdc.up.railway.app';
+    console.log('✅ Using Railway backend for Vercel');
 }
 // If running locally, use local backend
-else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+else if (hostname === 'localhost' || hostname === '127.0.0.1') {
     API_BASE_URL = 'http://localhost:5000';
+    console.log('✅ Using local backend');
 }
 // Default to Railway for any other domain
 else {
     API_BASE_URL = 'https://toolkit-production-2bdc.up.railway.app';
+    console.log('✅ Using Railway backend (default)');
 }
 
-console.log('🌐 Environment:', window.location.hostname);
+console.log('🌐 Environment:', hostname);
 console.log('🔗 API_BASE_URL:', API_BASE_URL);
+console.log('⏰ Timestamp:', new Date().toISOString());
 
 // Test backend connectivity
 async function testBackendConnection() {
