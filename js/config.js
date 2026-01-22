@@ -6,6 +6,28 @@ const API_BASE_URL = window.location.hostname === 'localhost'
 
 console.log('API_BASE_URL:', API_BASE_URL);
 
+// Test backend connectivity
+async function testBackendConnection() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/health`);
+        if (response.ok) {
+            console.log('✅ Backend is online');
+            return true;
+        } else {
+            console.error('❌ Backend returned status:', response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Backend connection failed:', error.message);
+        return false;
+    }
+}
+
+// Test on page load
+document.addEventListener('DOMContentLoaded', () => {
+    testBackendConnection();
+});
+
 // Helper function for API calls
 async function apiCall(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;

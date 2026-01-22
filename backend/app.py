@@ -62,7 +62,12 @@ async def preflight_handler(full_path: str):
 
 @app.get("/health")
 async def health():
-    return {"status": "running"}
+    return {"status": "running", "message": "Backend is online"}
+
+@app.get("/test")
+async def test():
+    """Simple test endpoint"""
+    return {"status": "ok", "message": "Backend is working!"}
 
 @app.post("/remove-bg")
 async def remove_bg(image: UploadFile = File(...)):
