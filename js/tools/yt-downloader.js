@@ -112,7 +112,7 @@ function processYouTube() {
     titleEl.textContent = "Fetching info...";
     thumbEl.src = "https://placehold.co/640x360?text=Loading";
 
-    fetch(`http://localhost:5000/yt-info?url=${encodeURIComponent(url)}`)
+    apiCall(`/yt-info?url=${encodeURIComponent(url)}`)
         .then(res => res.json())
         .then(data => {
             titleEl.textContent = data.title;
@@ -163,7 +163,7 @@ function downloadVideo(formatId) {
     const url = document.getElementById('yt-url').value.trim();
 
     // Create download URL with query parameters (backend uses GET)
-    const downloadUrl = `http://localhost:5000/download?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(formatId)}`;
+    const downloadUrl = `${API_BASE_URL}/download?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(formatId)}`;
 
     // Trigger download by creating a temporary link
     const a = document.createElement('a');

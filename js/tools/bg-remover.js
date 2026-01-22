@@ -50,7 +50,7 @@ async function processImage() {
         const formData = new FormData();
         formData.append('image', selectedFile);
 
-        const response = await fetch('http://localhost:5000/remove-bg', {
+        const response = await apiCall('/remove-bg', {
             method: 'POST',
             body: formData
         });
