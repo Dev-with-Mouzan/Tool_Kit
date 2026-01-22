@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Converter - Uppercase, Lowercase, Title Case Generator | WebToolkit</title>
+    <meta name="description"
+        content="Free online Case Converter tool. Convert text to uppercase, lowercase, title case, sentence case, and more instantly.">
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#6366f1', secondary: '#8b5cf6', dark: '#0f172a', card: '#1e293b' },
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body class="min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="glass sticky top-0 z-50 border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="../index.html" class="flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="h-6 w-6 text-gray-400 hover:text-white transition-colors"></i>
+                    <span
+                        class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Back
+                        to Tools</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-4xl mx-auto px-4 py-12 w-full">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl md:text-5xl font-bold text-white mb-4">Case Converter</h1>
+            <p class="text-gray-400">Easily convert text between different letter cases.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 w-full">
+            <!-- Input -->
+            <div class="glass-card rounded-xl p-4 flex flex-col h-[400px]">
+                <div class="flex justify-between items-center mb-2 px-2">
+                    <span class="text-sm font-medium text-gray-300">Input Text</span>
+                    <button onclick="clearText()" class="text-xs text-red-400 hover:text-red-300">Clear</button>
+                </div>
+                <textarea id="input-text"
+                    class="w-full flex-grow bg-black/30 border border-white/10 rounded-lg p-4 text-gray-200 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                    placeholder="Type or paste your text here..."></textarea>
+                <div class="mt-2 flex justify-between text-xs text-gray-500 px-2">
+                    <span>Characters: <span id="char-count">0</span></span>
+                    <span>Words: <span id="word-count">0</span></span>
+                </div>
+            </div>
+
+            <!-- Output -->
+            <div class="glass-card rounded-xl p-4 flex flex-col h-[400px]">
+                <div class="flex justify-between items-center mb-2 px-2">
+                    <span class="text-sm font-medium text-gray-300">Converted Text</span>
+                    <div class="flex gap-2">
+                        <button onclick="downloadText()"
+                            class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"><i
+                                data-lucide="download" class="w-3 h-3"></i> Save</button>
+                        <button id="copy-btn" onclick="copyToClipboard()"
+                            class="text-xs text-green-400 hover:text-green-300 flex items-center gap-1"><i
+                                data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                    </div>
+                </div>
+                <textarea id="output-text" readonly
+                    class="w-full flex-grow bg-black/30 border border-white/10 rounded-lg p-4 text-gray-200 focus:outline-none resize-none"
+                    placeholder="Result will appear here..."></textarea>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            <button onclick="toUpperCase()"
+                class="p-3 rounded-lg bg-white/5 hover:bg-indigo-600/50 border border-white/10 text-white font-medium transition-all">UPPER
+                CASE</button>
+            <button onclick="toLowerCase()"
+                class="p-3 rounded-lg bg-white/5 hover:bg-indigo-600/50 border border-white/10 text-white font-medium transition-all">lower
+                case</button>
+            <button onclick="toTitleCase()"
+                class="p-3 rounded-lg bg-white/5 hover:bg-indigo-600/50 border border-white/10 text-white font-medium transition-all">Title
+                Case</button>
+            <button onclick="toSentenceCase()"
+                class="p-3 rounded-lg bg-white/5 hover:bg-indigo-600/50 border border-white/10 text-white font-medium transition-all">Sentence
+                case</button>
+            <button onclick="toAlternatingCase()"
+                class="p-3 rounded-lg bg-white/5 hover:bg-indigo-600/50 border border-white/10 text-white font-medium transition-all">aLtErNaTiNg</button>
+        </div>
+
+        <!-- Ad Slot -->
+        <div
+            class="mt-12 w-full h-32 border border-white/10 rounded-lg bg-white/5 flex items-center justify-center text-gray-500">
+            AdSense Space
+        </div>
+
+    </main>
+
+    <footer class="bg-black/20 border-t border-white/5 mt-auto py-8 text-center text-gray-500 text-sm">
+        &copy; 2025 WebToolkit. All rights reserved.
+    </footer>
+
+    <script src="../js/tools/case-converter.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>

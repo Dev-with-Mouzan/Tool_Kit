@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      - ENVIRONMENT=production
+    volumes: [] # Remove volume mounts in production
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: always
+
+  frontend:
+    restart: always

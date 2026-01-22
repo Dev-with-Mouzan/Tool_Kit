@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compressor - Compress JPG, PNG Online | WebToolkit</title>
+    <meta name="description"
+        content="Free online Image Compressor. Reduce image file size without losing quality. Supports JPG, PNG, and WebP.">
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#6366f1', secondary: '#8b5cf6', dark: '#0f172a', card: '#1e293b' },
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* Custom image comparison styles override if needed */
+        img {
+            max-height: 250px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+    <nav class="glass sticky top-0 z-50 border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="../index.html" class="flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="h-6 w-6 text-gray-400 hover:text-white transition-colors"></i>
+                    <span
+                        class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Back
+                        to Tools</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-6xl mx-auto px-4 py-12 w-full">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl md:text-5xl font-bold text-white mb-4">Image Compressor</h1>
+            <p class="text-gray-400">Compress your images locally. No server upload required.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Controls -->
+            <div class="glass-card rounded-xl p-6 h-fit">
+                <div
+                    class="drop-zone border-2 border-dashed border-white/20 rounded-lg p-8 text-center cursor-pointer transition-colors hover:border-indigo-500/50 hover:bg-white/5 relative mb-6">
+                    <input type="file" id="image-input" accept="image/*"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <i data-lucide="upload-cloud" class="w-10 h-10 text-indigo-400 mx-auto mb-2"></i>
+                    <p class="text-sm text-gray-300 font-medium">Click to upload or drag & drop</p>
+                    <p class="text-xs text-gray-500 mt-1">JPG, PNG, WebP</p>
+                </div>
+
+                <div class="space-y-4">
+                    <label class="block text-sm font-medium text-gray-300">
+                        Quality: <span id="quality-value" class="text-indigo-400">80%</span>
+                    </label>
+                    <input type="range" id="compression-level" min="1" max="100" value="80"
+                        class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <p class="text-xs text-gray-500">Lower quality = Smaller size</p>
+                </div>
+
+                <div id="loading" class="hidden mt-4 flex justify-center">
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-700 h-8 w-8"></div>
+                </div>
+            </div>
+
+            <!-- Preview Area -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Original -->
+                    <div class="glass-card rounded-xl p-4 text-center">
+                        <span class="block text-sm font-medium text-gray-400 mb-2">Original</span>
+                        <div class="h-[250px] flex items-center justify-center bg-black/20 rounded">
+                            <img id="preview-original" src="" alt="Preview"
+                                class="hidden opacity-50 in-preview-original:block"
+                                onload="this.classList.remove('hidden')">
+                            <span class="text-gray-600 text-xs" id="placeholder-orig">No image</span>
+                        </div>
+                        <div class="mt-2 text-sm text-white font-mono" id="original-size">-</div>
+                    </div>
+
+                    <!-- Compressed -->
+                    <div class="glass-card rounded-xl p-4 text-center">
+                        <span class="block text-sm font-medium text-gray-400 mb-2">Compressed</span>
+                        <div class="h-[250px] flex items-center justify-center bg-black/20 rounded">
+                            <img id="preview-compressed" src="" alt="Compressed" class="hidden in-preview-comp:block"
+                                onload="this.classList.remove('hidden')">
+                            <span class="text-gray-600 text-xs" id="placeholder-comp">Waiting...</span>
+                        </div>
+                        <div class="mt-2 text-sm text-green-400 font-mono" id="compressed-size">-</div>
+                    </div>
+                </div>
+
+                <!-- Action -->
+                <div id="download-section" class="hidden text-center">
+                    <button id="download-btn" onclick="downloadImage()"
+                        class="px-8 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all shadow-lg shadow-indigo-500/30 w-full md:w-auto">
+                        <i data-lucide="download" class="w-5 h-5 inline-block mr-2"></i> Download Compressed Image
+                    </button>
+                    <p class="mt-2 text-sm text-gray-500">Files are processed instantly in your browser.</p>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="mt-12 w-full h-32 border border-white/10 rounded-lg bg-white/5 flex items-center justify-center text-gray-500">
+            AdSense Space
+        </div>
+    </main>
+
+    <script src="../js/tools/image-compressor.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        // Small helper to hide placeholders when images load
+        document.getElementById('preview-original').addEventListener('load', () => {
+            document.getElementById('placeholder-orig').style.display = 'none';
+            document.getElementById('preview-original').classList.remove('hidden');
+        });
+        document.getElementById('preview-compressed').addEventListener('load', () => {
+            document.getElementById('placeholder-comp').style.display = 'none';
+            document.getElementById('preview-compressed').classList.remove('hidden');
+        });
+    </script>
+</body>
+
+</html>

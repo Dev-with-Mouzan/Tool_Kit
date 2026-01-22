@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Converter - Convert PDF, Word, Excel & More | WebToolkit</title>
+    <meta name="description"
+        content="Convert documents between PDF, Word, Excel, PowerPoint, Text and Image formats. Fast, secure, and free online converter.">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- PDF.js for reading PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- Mammoth.js for reading DOCX -->
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+
+    <!-- jsPDF for generating PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- docx.js for generating DOCX -->
+    <script src="../js/libs/docx.min.js"></script>
+
+    <!-- SheetJS for Excel support -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#6366f1', secondary: '#8b5cf6', dark: '#0f172a', card: '#1e293b' },
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .format-option {
+            transition: all 0.3s ease;
+        }
+
+        .format-option:hover {
+            transform: translateY(-2px);
+        }
+
+        .format-option.selected {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+    <nav class="glass sticky top-0 z-50 border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="../index.html" class="flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="h-6 w-6 text-gray-400 hover:text-white transition-colors"></i>
+                    <span
+                        class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Back
+                        to Tools</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-6xl mx-auto px-4 py-12 w-full">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl md:text-5xl font-bold text-white mb-4">Universal Document Converter</h1>
+            <p class="text-gray-400">Convert between PDF, Word, Excel, PowerPoint, Text, and Image formats</p>
+            <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg inline-block">
+                <p class="text-blue-200 text-sm flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>100% client-side processing - Your files never leave your device</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8 mb-8">
+            <!-- Input Section -->
+            <div class="glass-card rounded-xl p-6">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="upload" class="w-5 h-5 text-indigo-400"></i>
+                    Input Format
+                </h2>
+
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <button onclick="selectInputFormat('pdf')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="file-text" class="w-8 h-8 text-red-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">PDF</p>
+                    </button>
+                    <button onclick="selectInputFormat('docx')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="file-type-2" class="w-8 h-8 text-blue-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">Word</p>
+                    </button>
+                    <button onclick="selectInputFormat('xlsx')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="table" class="w-8 h-8 text-green-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">Excel</p>
+                    </button>
+                    <button onclick="selectInputFormat('pptx')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="presentation" class="w-8 h-8 text-orange-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">PowerPoint</p>
+                    </button>
+                    <button onclick="selectInputFormat('txt')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="file-text" class="w-8 h-8 text-gray-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">Text</p>
+                    </button>
+                    <button onclick="selectInputFormat('image')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="image" class="w-8 h-8 text-purple-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">Image</p>
+                    </button>
+                </div>
+
+                <div
+                    class="border-2 border-dashed border-white/20 rounded-lg p-8 text-center cursor-pointer transition-colors hover:border-indigo-500/50 hover:bg-white/5 relative">
+                    <input type="file" id="file-input" accept="*/*"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <i data-lucide="upload-cloud" class="w-12 h-12 text-indigo-400 mx-auto mb-3"></i>
+                    <h3 class="text-lg font-medium text-white">Upload Document</h3>
+                    <p id="file-name" class="text-sm text-gray-400 mt-2">Click to select or drag & drop</p>
+                    <p class="text-xs text-gray-500 mt-1">Max size: 50MB</p>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="glass-card rounded-xl p-6">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="download" class="w-5 h-5 text-green-400"></i>
+                    Output Format
+                </h2>
+
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <button onclick="selectOutputFormat('pdf')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="file-text" class="w-8 h-8 text-red-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">PDF</p>
+                    </button>
+                    <button onclick="selectOutputFormat('docx')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="file-type-2" class="w-8 h-8 text-blue-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">Word</p>
+                    </button>
+                    <button onclick="selectOutputFormat('txt')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="file-text" class="w-8 h-8 text-gray-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">Text</p>
+                    </button>
+                    <button onclick="selectOutputFormat('image')"
+                        class="format-option border-2 border-white/20 rounded-lg p-3 text-center hover:border-indigo-500/50">
+                        <i data-lucide="image" class="w-8 h-8 text-purple-400 mx-auto mb-1"></i>
+                        <p class="text-xs text-gray-300">Images</p>
+                    </button>
+                </div>
+
+                <div id="conversion-info" class="bg-white/5 rounded-lg p-4 mb-4 hidden">
+                    <p class="text-sm text-gray-300"><span class="font-semibold text-white">Conversion:</span> <span
+                            id="conversion-path">-</span></p>
+                    <p class="text-xs text-gray-400 mt-1" id="conversion-note"></p>
+                </div>
+
+                <button id="convert-btn" onclick="convertDocument()" disabled
+                    class="w-full px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold transition-all shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-lucide="refresh-cw" class="w-5 h-5 inline-block mr-2"></i>
+                    Convert Document
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress & Status -->
+        <div id="progress-section" class="glass-card rounded-xl p-6 hidden">
+            <div class="flex items-center gap-4">
+                <div
+                    class="loader ease-linear rounded-full border-4 border-t-4 border-indigo-500 h-10 w-10 animate-spin">
+                </div>
+                <div class="flex-grow">
+                    <p id="status-msg" class="text-white font-medium">Processing...</p>
+                    <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
+                        <div id="progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all" style="width: 0%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Section -->
+        <div id="download-section" class="glass-card rounded-xl p-6 text-center hidden">
+            <i data-lucide="check-circle" class="w-16 h-16 text-green-400 mx-auto mb-4"></i>
+            <h3 class="text-xl font-semibold text-white mb-2">Conversion Complete!</h3>
+            <p class="text-gray-400 mb-6">Your document has been successfully converted</p>
+            <button id="download-btn" onclick="downloadResult()"
+                class="px-8 py-3 rounded-full bg-green-600 hover:bg-green-500 text-white font-semibold transition-all shadow-lg shadow-green-500/30">
+                <i data-lucide="download" class="w-5 h-5 inline-block mr-2"></i>
+                Download Result
+            </button>
+        </div>
+
+        <!-- AdSense Space -->
+        <div
+            class="mt-12 w-full h-32 border border-white/10 rounded-lg bg-white/5 flex items-center justify-center text-gray-500">
+            AdSense Space
+        </div>
+    </main>
+
+    <script src="../js/tools/document-converter.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+
+</html>
