@@ -22,14 +22,15 @@ COPY . .
 # Create downloads directory
 RUN mkdir -p downloads
 
-# Expose port
-EXPOSE 5000
+# Expose port (Railway will set PORT env var)
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/health')"
+    CMD python -c "import requests; requests.get('http://localhost:8080/health')" || exit 1
 
-# Start the application
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app:app", "--bind", "0.0.0.0:5000", "--access-logfile", "-", "--error-logfile", "-"]
+# Start the application - use PORT env var from Railway
+CMD ["sh", "-c", "gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:${PORT:-8080} --access-logfile - --error-logfile -"]
+
 # Run the application
 CMD ["python", "app.py"]
