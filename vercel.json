@@ -1,0 +1,16 @@
+{
+  "framework": "static",
+  "buildCommand": "echo 'Static site - no build needed'",
+  "outputDirectory": ".",
+  "public": true,
+  "cleanUrls": false,
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "@api_url"
+  }
+}
