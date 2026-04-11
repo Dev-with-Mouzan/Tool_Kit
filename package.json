@@ -1,0 +1,31 @@
+{
+  "name": "webtoolkit",
+  "version": "1.0.0",
+  "description": "Premium online tools for PDF conversion, image compression, YouTube downloads, and more",
+  "main": "index.html",
+  "scripts": {
+    "serve": "python -m http.server 8000"
+  },
+  "keywords": [
+    "pdf-converter",
+    "image-compressor",
+    "youtube-downloader",
+    "background-remover",
+    "qr-generator",
+    "online-tools",
+    "web-utilities"
+  ],
+  "author": "Dev-with-Mouzan",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dev-with-Mouzan/Tool_Kit.git"
+  },
+  "engines": {
+    "node": "24.x",
+    "python": ">=3.9.0"
+  }
+}

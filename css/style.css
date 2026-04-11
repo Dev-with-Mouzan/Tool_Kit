@@ -1,0 +1,251 @@
+/* Custom Styles & Animations - Updated for Stitch UI */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #6366f1;
+    --accent: #a855f7;
+    --bg-color: #f1f5f9; /* Slightly more contrast for background */
+    --text-color: #0f172a;
+    --card-bg: rgba(255, 255, 255, 0.6); /* Adjusted for better visibility */
+    --border-color: rgba(99, 102, 241, 0.15); /* Soft primary border for visibility */
+    --grid-color: rgba(99, 102, 241, 0.05); /* Very subtle grid */
+    --secondary-text: #64748b;
+    --sidebar-bg: #ffffff;
+    --nav-bg: rgba(248, 250, 252, 0.9);
+    --checker-1: #f1f5f9;
+    --checker-2: #ffffff;
+    --item-bg: #ffffff;
+    --item-hover-bg: #f8fafc;
+    --item-border: #f1f5f9;
+    --badge-bg: #f1f5f9;
+    --badge-text: #64748b;
+}
+
+.dark {
+    --bg-color: #020617; /* Deepest Indigo/Slate */
+    --text-color: #f1f5f9;
+    --card-bg: rgba(15, 23, 42, 0.6);
+    --border-color: rgba(30, 41, 59, 0.5);
+    --secondary-text: #94a3b8;
+    --sidebar-bg: #020617;
+    --nav-bg: rgba(2, 6, 23, 0.8);
+    --checker-1: #0f172a;
+    --checker-2: #020617;
+    --item-bg: #0f172a;
+    --item-hover-bg: #1e293b;
+    --item-border: #1e293b;
+    --badge-bg: rgba(30, 41, 59, 0.5);
+    --badge-text: #94a3b8;
+}
+
+html { font-size: 15.5px; } /* Global 3% reduction from 16px */
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    background-image: 
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 50px 50px;
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.45; /* Slightly tighter line height */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body {
+    background-image: none;
+}
+
+/* Glassmorphism Utilities - Refined for Light Mode */
+.glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+}
+
+.glass-card {
+    background-color: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass-card {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.glass-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-8px) scale(1.01);
+}
+
+/* Decorative Pulse */
+@keyframes pulse-soft {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(1.1); }
+}
+
+.animate-pulse-soft {
+    animation: pulse-soft 4s ease-in-out infinite;
+}
+
+.tool-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tool-card.hidden {
+    display: none;
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+
+/* Neon & Effects */
+.neon-icon {
+    text-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
+}
+
+.ad-placeholder {
+    background: rgba(241, 245, 249, 0.8);
+    border: 1px dashed rgba(148, 163, 184, 0.5);
+}
+
+.checkerboard {
+    background-image: linear-gradient(45deg, var(--checker-1) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--checker-1) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--checker-1) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--checker-1) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    background-color: var(--checker-2);
+}
+
+.queue-item {
+    background-color: var(--item-bg) !important;
+    border-color: var(--item-border) !important;
+}
+
+.queue-item:hover {
+    background-color: var(--item-hover-bg) !important;
+}
+
+.status-badge-pending {
+    background-color: var(--badge-bg) !important;
+    color: var(--badge-text) !important;
+    border-color: var(--item-border) !important;
+}
+
+.glass-card {
+    background: var(--card-bg) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color) !important;
+}
+
+/* Animations */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--secondary-text);
+    border-radius: 10px;
+    opacity: 0.5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Loader */
+.loader {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* Typewriter Effect */
+.typewriter-cursor {
+    display: inline-block;
+    width: 2px;
+    background-color: currentColor;
+    margin-left: 2px;
+    animation: typewriter-blink 1s step-end infinite;
+}
+
+@keyframes typewriter-blink {
+
+    from,
+    to {
+        background-color: transparent
+    }
+
+    50% {
+        background-color: currentColor
+    }
+}
+
+/* Image Enhancer Slider Customizations */
+.comparison-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    z-index: 10;
+}
+
+.comparison-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 100%;
+    width: 2px;
+    background: #3b82f6;
+    cursor: ew-resize;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+}
+
+.comparison-container img {
+    max-height: 70vh;
+    object-fit: contain;
+}
+
+#after-wrapper img {
+    max-width: none;
+}

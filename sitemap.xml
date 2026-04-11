@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://filetoolkit.unaux.com/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/image-compressor.html</loc><priority>0.9</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/bg-remover.html</loc><priority>0.9</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/image-converter.html</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/image-enhancer.html</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/image-to-pdf.html</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/passport-photo-maker.html</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/pdf-compressor.html</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/social-media-resizer.html</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/video-converter.html</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/tools/document-converter.html</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://filetoolkit.unaux.com/privacy.html</loc><priority>0.5</priority><changefreq>yearly</changefreq></url>
+</urlset>
