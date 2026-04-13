@@ -145,17 +145,17 @@
                         <div class="relative bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center" style="min-height:300px">
                             <canvas id="crop-canvas" class="max-w-full max-h-[400px]"></canvas>
                         </div>
-                        <div class="flex flex-col sm:flex-row gap-3 mt-4">
-                            <button id="generate-btn" class="flex-1 bg-primary text-white py-3 px-6 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all flex items-center justify-center gap-2"><span class="material-symbols-outlined">auto_fix_high</span>Generate Print Sheet</button>
+                        <div class="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                            <button id="generate-btn" class="w-full sm:w-max sm:px-12 bg-primary text-white py-3 px-6 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all flex items-center justify-center gap-2"><span class="material-symbols-outlined">auto_fix_high</span>Generate Print Sheet</button>
                             <button id="reset-btn" class="w-full sm:w-auto px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-900 transition-all">Reset</button>
                         </div>
                     </div>
                     <div id="result-area" class="hidden glass-card rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
                         <h3 class="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-green-500">check_circle</span>Print Sheet Ready</h3>
                         <canvas id="print-canvas" class="w-full rounded-xl border border-slate-200 dark:border-slate-700"></canvas>
-                        <div class="flex flex-col sm:flex-row gap-3 mt-4">
-                            <button id="download-btn" class="flex-1 bg-primary text-white py-3.5 px-6 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all flex items-center justify-center gap-2"><span class="material-symbols-outlined">download</span>Download Print Sheet</button>
-                            <button id="download-pdf-btn" class="flex-1 border border-primary text-primary py-3.5 px-6 rounded-xl font-bold text-sm hover:bg-primary/5 transition-all flex items-center justify-center gap-2"><span class="material-symbols-outlined">picture_as_pdf</span>Download as PDF</button>
+                        <div class="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                            <button id="download-btn" class="w-full sm:w-max sm:px-10 bg-primary text-white py-3.5 px-6 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all flex items-center justify-center gap-2"><span class="material-symbols-outlined">download</span>Download Print Sheet</button>
+                            <button id="download-pdf-btn" class="w-full sm:w-max sm:px-10 border border-primary text-primary py-3.5 px-6 rounded-xl font-bold text-sm hover:bg-primary/5 transition-all flex items-center justify-center gap-2"><span class="material-symbols-outlined">picture_as_pdf</span>Download as PDF</button>
                         </div>
                     </div>
                 </div>
