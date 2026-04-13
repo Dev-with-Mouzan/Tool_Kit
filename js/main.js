@@ -8,30 +8,61 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
-    // Mobile Menu Toggle
+    // Mobile Menu Logic
     const menuBtn = document.getElementById('mobile-menu-btn');
     const closeMenuBtn = document.getElementById('close-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
+    const mobileSearchInput = document.getElementById('mobile-search-input');
 
     if (menuBtn && mobileMenu) {
         menuBtn.addEventListener('click', () => {
             mobileMenu.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
         });
     }
 
     if (closeMenuBtn && mobileMenu) {
-        closeMenuBtn.addEventListener('click', () => {
+        closeMenuBtn.onclick = () => {
             mobileMenu.classList.add('hidden');
-        });
+            document.body.style.overflow = '';
+        };
     }
 
-    // Close menu when clicking a link
-    const mobileLinks = mobileMenu?.querySelectorAll('a');
+    // Close menu when clicking links
+    const mobileLinks = mobileMenu?.querySelectorAll('nav a');
     mobileLinks?.forEach(link => {
         link.addEventListener('click', () => {
             mobileMenu.classList.add('hidden');
+            document.body.style.overflow = '';
         });
     });
+
+    // Unified Search Filter (Desktop Sidebar & Mobile Overlay)
+    const handleSearch = (term, linksSelector) => {
+        const links = document.querySelectorAll(linksSelector);
+        const categories = document.querySelectorAll('.category-header');
+        
+        links.forEach(link => {
+            const text = link.textContent.toLowerCase();
+            const isMatch = text.includes(term.toLowerCase());
+            link.style.display = isMatch ? 'flex' : 'none';
+        });
+
+        // Hide categories if no links visible under them (optional enhancement)
+    };
+
+    if (mobileSearchInput) {
+        mobileSearchInput.addEventListener('input', (e) => {
+            handleSearch(e.target.value, '#mobile-menu nav a');
+        });
+    }
+
+    const desktopSearchInput = document.getElementById('sidebar-search');
+    if (desktopSearchInput) {
+        desktopSearchInput.addEventListener('input', (e) => {
+            handleSearch(e.target.value, 'aside nav a');
+        });
+    }
 
     // Add active class to current nav link
     const currentPath = window.location.pathname;

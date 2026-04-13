@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filesQueue.forEach(item => {
             const row = document.createElement('div');
-            row.className = `p-4 flex items-center gap-4 group transition-all rounded-xl border ${
+            row.className = `p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 group transition-all rounded-xl border ${
                 item.status === 'complete' ? 'border-green-200 dark:border-green-900/30 bg-green-500/5' :
                 item.status === 'error' ? 'border-red-200 dark:border-red-900/30 bg-red-500/5' :
                 item.status === 'processing' ? 'border-primary/30 bg-primary/5' :
@@ -113,33 +113,37 @@ document.addEventListener('DOMContentLoaded', () => {
             const ext = item.file.type.split('/')[1]?.toUpperCase() || 'IMAGE';
 
             row.innerHTML = `
-                <div class="w-14 h-14 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 shadow-inner">
-                    <img src="${item.previewUrl}" class="w-full h-full object-cover">
+                <div class="flex items-center gap-3 w-full">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 shadow-inner">
+                        <img src="${item.previewUrl}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0 overflow-hidden">
+                        <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${item.file.name}</h5>
+                        <span class="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                            ${formatBytes(item.originalSize)} &bull; ${ext} &rarr;
+                            <span class="text-primary font-black">${item.targetFormat.toUpperCase()}</span>
+                        </span>
+                        ${item.error ? `<p class="text-[9px] text-red-500 mt-1">${item.error}</p>` : ''}
+                    </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${item.file.name}</h5>
-                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
-                        ${formatBytes(item.originalSize)} &bull; ${ext} &rarr;
-                        <span class="text-primary font-black">${item.targetFormat.toUpperCase()}</span>
-                    </span>
-                    ${item.error ? `<p class="text-[9px] text-red-500 mt-1">${item.error}</p>` : ''}
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-[9px] font-bold uppercase tracking-widest ${
+                <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                    <span class="text-[10px] sm:text-[9px] font-bold uppercase tracking-widest ${
                         item.status === 'complete' ? 'text-green-500' :
                         item.status === 'error' ? 'text-red-500' :
                         item.status === 'processing' ? 'text-primary animate-pulse' : 'text-slate-400'
                     }">${statusLabel}</span>
-                    ${item.status === 'complete' && item.resultUrl ? `
-                        <a href="${item.resultUrl}" download="converted_${item.file.name.split('.')[0]}.${item.targetFormat}" class="w-8 h-8 rounded-lg bg-green-500/10 text-green-500 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all" title="Download">
-                            <span class="material-symbols-outlined text-lg">download</span>
-                        </a>
-                    ` : ''}
-                    ${!isProcessing ? `
-                        <button class="remove-item-btn w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-red-500/10 hover:text-red-500 flex items-center justify-center transition-all" data-id="${item.id}">
-                            <span class="material-symbols-outlined text-lg">close</span>
-                        </button>
-                    ` : ''}
+                    <div class="flex items-center gap-2">
+                        ${item.status === 'complete' && item.resultUrl ? `
+                            <a href="${item.resultUrl}" download="converted_${item.file.name.split('.')[0]}.${item.targetFormat}" class="w-8 h-8 rounded-lg bg-green-500/10 text-green-500 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all" title="Download">
+                                <span class="material-symbols-outlined text-base sm:text-lg">download</span>
+                            </a>
+                        ` : ''}
+                        ${!isProcessing ? `
+                            <button class="remove-item-btn w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-red-500/10 hover:text-red-500 flex items-center justify-center transition-all" data-id="${item.id}">
+                                <span class="material-symbols-outlined text-base sm:text-lg">close</span>
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
             `;
             queueList.appendChild(row);

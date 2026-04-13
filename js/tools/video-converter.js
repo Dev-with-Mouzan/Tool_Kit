@@ -1,11 +1,10 @@
-let ffmpeg = null;
-let ffmpegLoaded = false;
-
-console.log('video-converter.js loaded');
+// FFmpeg libraries loaded via script tags in HTML to bypass CORS/Worker origin restrictions
+const { FFmpeg } = window.FFmpegWASM || {};
+const { toBlobURL, fetchFile } = window.FFmpegUtil || {};
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded fired');
     const fileInput = document.getElementById('file-input');
+    // ... rest of the elements initialization
     const dropZone = document.getElementById('drop-zone');
     const editorArea = document.getElementById('editor-area');
     const queueList = document.getElementById('queue-list');
@@ -22,12 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const statSuccess = document.getElementById('stat-success');
     const statError = document.getElementById('stat-error');
     
-    console.log('Elements found:', { fileInput, dropZone, editorArea, queueList, queueCount });
-
     let filesQueue = [];
     let isProcessing = false;
     let globalFormat = 'mp4';
+    let ffmpeg = null;
+    let ffmpegLoaded = false;
 
+    // ... (logic from line 29 stays the same)
+    // Format selection
     formatBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -40,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.remove('border-slate-200', 'bg-slate-50', 'text-slate-600', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-400');
 
             globalFormat = btn.dataset.format;
-
             filesQueue.forEach(item => {
                 if (item.status === 'ready' || item.status === 'error') {
                     item.targetFormat = globalFormat;
@@ -50,14 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    if (formatBtns.length > 0) {
-        formatBtns[0].click();
-    }
+    if (formatBtns.length > 0) formatBtns[0].click();
 
+    // File handling
     dropZone.addEventListener('click', (e) => {
-        if (e.target.tagName !== 'BUTTON') {
-            fileInput.click();
-        }
+        if (e.target.tagName !== 'BUTTON') fileInput.click();
     });
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -66,34 +63,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dropZone.addEventListener('dragover', () => dropZone.classList.add('bg-primary/10', 'border-primary'));
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('bg-primary/10', 'border-primary'));
-
     dropZone.addEventListener('drop', e => {
         dropZone.classList.remove('bg-primary/10', 'border-primary');
         if (e.dataTransfer.files.length) handleFiles(Array.from(e.dataTransfer.files));
     });
 
     fileInput.addEventListener('change', () => {
-        console.log('File input changed, files:', fileInput.files.length);
-        if (fileInput.files.length) {
-            handleFiles(Array.from(fileInput.files));
-        }
+        if (fileInput.files.length) handleFiles(Array.from(fileInput.files));
+        fileInput.value = '';
     });
 
     function handleFiles(files) {
-        const validFiles = files.filter(file => file.type.startsWith('video/'));
+        const videos = files.filter(file => file.type.startsWith('video/'));
+        const validFiles = videos.filter(f => f.size <= 500 * 1024 * 1024);
 
-        if (validFiles.length < files.length) {
-            alert('Some files were skipped. Only videos are supported.');
-        }
+        if (videos.length < files.length) alert('Some files were skipped. Only videos are supported.');
+        if (validFiles.length < videos.length) alert('Some files exceed the 500MB limit and were skipped.');
 
-        const largeFilesNum = validFiles.filter(f => f.size > 500 * 1024 * 1024).length;
-        if (largeFilesNum > 0) {
-            alert(`${largeFilesNum} files exceed the 500MB limit and will be skipped.`);
-        }
-
-        const accepts = validFiles.filter(f => f.size <= 500 * 1024 * 1024);
-
-        accepts.forEach(file => {
+        validFiles.forEach(file => {
             filesQueue.push({
                 file: file,
                 id: Math.random().toString(36).substr(2, 9),
@@ -106,308 +93,144 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (filesQueue.length > 0) {
-            console.log('Showing editor area');
             dropZone.classList.add('hidden');
-            dropZone.style.display = 'none';
             editorArea.classList.remove('hidden');
-            editorArea.style.display = 'block';
-            editorArea.style.visibility = 'visible';
             renderQueue();
         }
     }
 
     function renderQueue() {
-        console.log('renderQueue called');
-        console.log('queueList:', queueList);
-        if (!queueList) {
-            console.error('queueList not found!');
-            return;
-        }
+        if (!queueList) return;
         queueList.innerHTML = '';
         if (queueCount) queueCount.textContent = filesQueue.length;
 
         const stats = { ready: 0, success: 0, error: 0, processing: 0 };
         filesQueue.forEach(f => stats[f.status === 'processing' ? 'ready' : f.status]++);
         
-        if (statPending) statPending.textContent = stats.ready;
-        if (statSuccess) statSuccess.textContent = stats.success;
-        if (statError) statError.textContent = stats.error;
+        statPending.textContent = stats.ready;
+        statSuccess.textContent = stats.success;
+        statError.textContent = stats.error;
 
-        const canConvert = stats.ready > 0 || stats.error > 0;
         const canDownload = stats.success > 0 && !isProcessing;
-        
-        if (canDownload && !canConvert) {
+        const hasWork = stats.ready > 0 || stats.error > 0;
+
+        if (canDownload && !hasWork) {
             convertBtn.disabled = false;
-            convertBtn.classList.remove('opacity-50', 'from-primary', 'to-indigo-600', 'shadow-primary/20');
-            convertBtn.classList.add('bg-green-600', 'shadow-green-600/20');
+            convertBtn.classList.remove('from-primary', 'to-indigo-600');
+            convertBtn.classList.add('bg-green-600');
             convertBtn.innerHTML = '<span class="material-symbols-outlined text-base">download</span>Download All (ZIP)';
             convertBtn.dataset.mode = 'download';
-            if (downloadAllBtn) downloadAllBtn.classList.remove('hidden');
         } else {
-            if (downloadAllBtn) downloadAllBtn.classList.add('hidden');
-            convertBtn.classList.remove('bg-green-600', 'shadow-green-600/20');
-            convertBtn.classList.add('from-primary', 'to-indigo-600', 'shadow-primary/20');
+            convertBtn.classList.remove('bg-green-600');
+            convertBtn.classList.add('from-primary', 'to-indigo-600');
             convertBtn.innerHTML = '<span class="material-symbols-outlined text-base">rocket_launch</span>Process Batch';
             convertBtn.disabled = isProcessing || filesQueue.length === 0;
-            if (isProcessing) convertBtn.classList.add('opacity-50');
-            else convertBtn.classList.remove('opacity-50');
             convertBtn.dataset.mode = 'convert';
         }
 
-        if (clearBtn) {
-            clearBtn.classList.toggle('hidden', (stats.success === 0 && stats.error === 0) || isProcessing);
-        }
+        if (clearBtn) clearBtn.classList.toggle('hidden', (stats.success === 0 && stats.error === 0) || isProcessing);
 
         filesQueue.forEach(item => {
-            console.log('Rendering item:', item.file.name);
             const row = document.createElement('div');
-            row.className = `p-5 queue-item bg-white dark:bg-slate-900/50 flex flex-col sm:flex-row items-center gap-6 group transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 border-l-4 ${
+            row.className = `p-4 sm:p-5 queue-item bg-white dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 border-l-4 ${
                 item.status === 'success' ? 'border-green-500 bg-green-500/5' : 
                 item.status === 'error' ? 'border-red-500 bg-red-500/5' : 
                 item.status === 'processing' ? 'border-primary bg-primary/5' : 'border-transparent'
             }`;
 
             const statusLabel = item.status === 'ready' ? 'Ready' : 
-                               item.status === 'processing' ? 'Converting...' : 
+                               item.status === 'processing' ? `Converting (${item.progress}%)` : 
                                item.status === 'success' ? 'Finished' : 'Failed';
 
             row.innerHTML = `
-                <div class="w-full sm:w-auto flex items-center justify-between gap-4 w-full">
-                    <div class="flex items-center gap-4 w-full min-w-0">
-                        <div class="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center shrink-0 justify-center text-slate-500 group-hover:text-primary transition-all shadow-inner border border-slate-200 dark:border-slate-700">
-                            <span class="material-symbols-outlined text-3xl animate-float">movie</span>
-                        </div>
-                        
-                        <div class="flex-1 min-w-0 flex flex-col pt-1">
-                            <div class="flex items-center justify-between gap-4 mb-2">
-                                <div class="flex flex-col truncate pr-4">
-                                    <h5 class="text-xs font-black text-slate-900 dark:text-white truncate tracking-wide">${item.file.name}</h5>
-                                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
-                                        ${formatBytes(item.file.size)} &bull; ${item.file.type.split('/')[1]?.toUpperCase() || 'VIDEO'} &rarr; 
-                                        <span class="text-primary font-black">${item.targetFormat.toUpperCase()}</span>
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-3 shrink-0">
-                                    ${item.status === 'ready' ? `
-                                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-500">Ready</span>
-                                    ` : `
-                                        <span class="text-[9px] font-black uppercase tracking-widest whitespace-nowrap ${
-                                            item.status === 'success' ? 'text-green-500' : 
-                                            item.status === 'error' ? 'text-red-400' : 
-                                            item.status === 'processing' ? 'text-primary animate-pulse' : 'text-slate-500'
-                                        }">${statusLabel}</span>
-                                    `}
-                                </div>
+                <div class="flex-1 flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 shrink-0">
+                        <span class="material-symbols-outlined text-xl sm:text-2xl">movie</span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
+                            <h5 class="text-xs font-black text-slate-900 dark:text-white truncate pr-2">${item.file.name}</h5>
+                            <div class="shrink-0 text-[10px] font-black uppercase tracking-wider">
+                                <span class="${item.status === 'success' ? 'text-green-500' : item.status === 'error' ? 'text-red-500' : 'text-slate-400'}">${statusLabel}</span>
                             </div>
-
-                            ${item.status === 'processing' ? `
-                                <div class="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
-                                    <div class="bg-primary h-full transition-all duration-700 ease-in-out" style="width: ${item.progress}%"></div>
-                                </div>
-                            ` : ''}
-                            
-                            ${item.error ? `<div class="flex items-center gap-1.5 text-red-500 italic font-medium mt-1"><span class="material-symbols-outlined text-xs">error</span><span class="text-[9px]">${item.error}</span></div>` : ''}
                         </div>
+                        <p class="text-[9px] text-slate-500 font-bold uppercase mt-1">
+                            ${formatBytes(item.file.size)} &bull; ${item.targetFormat.toUpperCase()}
+                        </p>
+                        ${item.status === 'processing' ? `
+                            <div class="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
+                                <div class="bg-primary h-full transition-all duration-300" style="width: ${item.progress}%"></div>
+                            </div>
+                        ` : ''}
+                        ${item.error ? `<p class="text-[9px] text-red-500 mt-1 italic font-medium">${item.error}</p>` : ''}
                     </div>
                 </div>
-
-                <div class="flex items-center gap-2 mt-4 sm:mt-0 w-full justify-end sm:w-auto shrink-0">
+                <div class="flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800/50 pt-3 sm:pt-0 sm:border-0 sm:shrink-0">
                     ${item.status === 'success' ? `
-                        <button class="download-item-btn w-9 h-9 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-lg active:scale-90" data-id="${item.id}" title="Download Result">
-                            <span class="material-symbols-outlined text-xl">download</span>
+                        <button onclick="window.downloadItem('${item.id}')" class="flex-1 sm:flex-none h-9 px-4 sm:px-0 sm:w-9 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all gap-2">
+                            <span class="material-symbols-outlined text-lg">download</span>
+                            <span class="sm:hidden text-[10px] font-bold uppercase">Download</span>
                         </button>
                     ` : ''}
                     ${!isProcessing ? `
-                        <button class="remove-item-btn w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-500/10 hover:text-red-500 flex items-center justify-center transition-all group-hover:opacity-100" data-id="${item.id}" title="Remove from Queue">
-                            <span class="material-symbols-outlined text-xl">close</span>
+                        <button onclick="window.removeItem('${item.id}')" class="flex-1 sm:flex-none h-9 px-4 sm:px-0 sm:w-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 flex items-center justify-center transition-all gap-2">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                            <span class="sm:hidden text-[10px] font-bold uppercase">Remove</span>
                         </button>
                     ` : ''}
                 </div>
             `;
-
             queueList.appendChild(row);
         });
-
-        console.log('Total items in queueList:', queueList.children.length);
-        queueList.style.display = 'flex';
-        queueList.style.flexDirection = 'column';
-        queueList.style.minHeight = '100px';
-        bindQueueEvents();
     }
 
-    function bindQueueEvents() {
-        document.querySelectorAll('.remove-item-btn').forEach(btn => {
-            btn.onclick = () => {
-                const id = btn.dataset.id;
-                const item = filesQueue.find(i => i.id === id);
-                if (item && item.resultUrl) URL.revokeObjectURL(item.resultUrl);
-                filesQueue = filesQueue.filter(item => item.id !== id);
-                if (filesQueue.length === 0) reset();
-                else renderQueue();
-            };
-        });
+    // FFmpeg Loading
+    async function initFFmpeg() {
+        if (ffmpegLoaded) return true;
 
-        document.querySelectorAll('.download-item-btn').forEach(btn => {
-            btn.onclick = () => {
-                const id = btn.dataset.id;
-                const item = filesQueue.find(i => i.id === id);
-                if (item && item.resultUrl) triggerDownload(item);
-            };
-        });
-    }
-
-    function triggerDownload(item) {
-        const link = document.createElement('a');
-        link.href = item.resultUrl;
-        const base = item.file.name.split('.').slice(0, -1).join('.');
-        link.download = `${base}_converted.${item.targetFormat}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    async function loadFFmpeg() {
-        if (ffmpegLoaded && ffmpeg) return true;
-        
         const progressStage = document.getElementById('progress-stage');
-        if (progressStage) progressStage.textContent = 'Loading FFmpeg engine...';
-        
-        return new Promise(async (resolve, reject) => {
-            try {
-                if (window._ffmpegReady) {
-                    ffmpeg = window._ffmpegInstance;
-                    window.ffmpegFetchFile = window._fetchFile;
-                    ffmpegLoaded = true;
-                    resolve(true);
-                    return;
-                }
-                
-                const CDN = 'https://unpkg.com/@ffmpeg';
-                
-                const { FFmpeg: FFmpegClass, fetchFile: fetchFileFn } = await import(`${CDN}/ffmpeg@0.12.10/+esm`);
-                
-                ffmpeg = new FFmpegClass();
-                
-                ffmpeg.on('progress', ({ progress }) => {
-                    const pending = filesQueue.filter(f => f.status === 'processing');
-                    if (pending.length > 0) {
-                        pending[0].progress = Math.min(Math.round(progress * 100), 99);
-                        renderQueue();
-                    }
-                });
-                
-                await ffmpeg.load();
-                
-                window._ffmpegReady = true;
-                window._ffmpegInstance = ffmpeg;
-                window._fetchFile = fetchFileFn;
-                window.ffmpegFetchFile = fetchFileFn;
-                ffmpegLoaded = true;
-                resolve(true);
-            } catch (err) {
-                console.error('FFmpeg load error:', err);
-                reject(err);
+        if (progressStage) progressStage.textContent = 'Initializing engine...';
+
+        try {
+            // Check for SharedArrayBuffer support
+            if (!window.SharedArrayBuffer) {
+                console.warn('SharedArrayBuffer not available. FFmpeg will run in single-threaded mode (slower).');
             }
-        });
-    }
-                
-                const loadScript = (src) => {
-                    return new Promise((res, rej) => {
-                        const existing = document.querySelector(`script[src="${src}"]`);
-                        if (existing) { res(); return; }
-                        const s = document.createElement('script');
-                        s.src = src;
-                        s.crossOrigin = 'anonymous';
-                        s.onload = res;
-                        s.onerror = () => rej(new Error(`Failed to load: ${src}`));
-                        document.head.appendChild(s);
-                    });
-                };
-                
-                const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg';
-                await loadScript(`${base}/core@0.12.6/dist/umd/ffmpeg-core.js`);
-                await loadScript(`${base}/util@0.12.1/dist/umd/index.js`);
-                await loadScript(`${base}/ffmpeg@0.12.10/dist/umd/index.js`);
-                
-                for (let i = 0; i < 50; i++) {
-                    if (typeof FFmpeg !== 'undefined') break;
-                    await new Promise(r => setTimeout(r, 100));
+
+            // Local FFmpeg Library Paths
+            const localBase = '../js/libs/ffmpeg';
+            ffmpeg = new FFmpeg();
+            
+            ffmpeg.on('progress', ({ progress }) => {
+                const currentFile = filesQueue.find(f => f.status === 'processing');
+                if (currentFile) {
+                    currentFile.progress = Math.round(progress * 100);
+                    renderQueue();
                 }
-                
-                if (typeof FFmpeg === 'undefined') {
-                    throw new Error('FFmpeg library not found on window');
-                }
-                
-                ffmpeg = new FFmpeg();
-                
-                ffmpeg.on('progress', ({ progress }) => {
-                    const pending = filesQueue.filter(f => f.status === 'processing');
-                    if (pending.length > 0) {
-                        pending[0].progress = Math.min(Math.round(progress * 100), 99);
-                        renderQueue();
-                    }
-                });
-                
-                await ffmpeg.load({
-                    coreURL: `${base}/core@0.12.6/dist/umd/ffmpeg-core.js`,
-                    wasmURL: `${base}/core@0.12.6/dist/umd/ffmpeg-core.wasm`
-                });
-                
-                window._ffmpegReady = true;
-                window._ffmpegInstance = ffmpeg;
-                window._fetchFile = fetchFile;
-                window.ffmpegFetchFile = fetchFile;
-                ffmpegLoaded = true;
-                resolve(true);
-            } catch (err) {
-                console.error('FFmpeg load error:', err);
-                reject(err);
+            });
+
+            // Load local core and worker
+            await ffmpeg.load({
+                coreURL: await toBlobURL(`${localBase}/ffmpeg-core.js`, 'text/javascript'),
+                wasmURL: await toBlobURL(`${localBase}/ffmpeg-core.wasm`, 'application/wasm'),
+                workerURL: await toBlobURL(`${localBase}/worker.js`, 'text/javascript'),
+            });
+
+            ffmpegLoaded = true;
+            return true;
+        } catch (err) {
+            console.error('FFmpeg Load Error:', err);
+            let msg = err.message || 'Unknown error';
+            if (msg.includes('SharedArrayBuffer')) {
+                msg = 'SharedArrayBuffer not available. This tool requires cross-origin isolation or a modern browser with multithreading support.';
             }
-        });
+            throw new Error(`Failed to load video engine: ${msg}`);
+        }
     }
 
     convertBtn.addEventListener('click', async () => {
         if (convertBtn.dataset.mode === 'download') {
-            const successes = filesQueue.filter(f => f.status === 'success' && f.resultUrl);
-            if (successes.length === 0) return;
-
-            if (successes.length === 1) {
-                triggerDownload(successes[0]);
-                return;
-            }
-
-            const activeText = convertBtn.innerHTML;
-            convertBtn.innerHTML = '<span class="material-symbols-outlined text-base animate-spin">cyclone</span>Zipping...';
-            convertBtn.disabled = true;
-
-            try {
-                await LazyLoader.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
-                
-                const zip = new JSZip();
-                const folder = zip.folder("FileToolkitPro_Videos");
-
-                for (const item of successes) {
-                    const res = await fetch(item.resultUrl);
-                    const blob = await res.blob();
-                    const base = item.file.name.split('.').slice(0, -1).join('.');
-                    folder.file(`${base}_converted.${item.targetFormat}`, blob);
-                }
-
-                const content = await zip.generateAsync({ type: "blob" });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(content);
-                link.download = "FileToolkitPro_Videos.zip";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-            } catch (err) {
-                console.error(err);
-                alert("Failed to bundle videos");
-            } finally {
-                convertBtn.innerHTML = activeText;
-                convertBtn.disabled = false;
-            }
+            downloadAll();
             return;
         }
 
@@ -415,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pending.length === 0) return;
 
         try {
-            await loadFFmpeg();
+            await initFFmpeg();
         } catch (err) {
             alert(err.message);
             return;
@@ -423,124 +246,128 @@ document.addEventListener('DOMContentLoaded', () => {
 
         isProcessing = true;
         processingStatus.classList.remove('hidden');
-        document.getElementById('processing-details')?.classList.remove('hidden');
         renderQueue();
 
         let completed = 0;
-        let total = pending.length;
         const startTime = Date.now();
-        const progressStage = document.getElementById('progress-stage');
-        const etaDisplay = document.getElementById('eta-display');
-        const batchProgressBar = document.getElementById('batch-progress-bar');
-        
-        for (const item of pending) {
-            if (completed > 0) {
-                const elapsed = Date.now() - startTime;
-                const avgTime = elapsed / completed;
-                const remaining = total - completed;
-                const remainingSecs = Math.round((avgTime * remaining) / 1000);
-                if (etaDisplay) etaDisplay.textContent = `ETA: ${remainingSecs}s`;
-            }
-            if (progressStage) {
-                progressStage.textContent = completed / total < 0.8 ? 'Transcoding...' : 'Finalizing...';
-            }
 
+        for (const item of pending) {
             item.status = 'processing';
             item.progress = 0;
             item.error = null;
             renderQueue();
-            
-            globalProgressText.textContent = `Video ${completed + 1} of ${total}`;
-            updateGlobalProgress(((completed) / total) * 100);
-            if (batchProgressBar) batchProgressBar.style.width = `${(completed / total) * 100}%`;
+
+            globalProgressText.textContent = `Processing video ${completed + 1} of ${pending.length}`;
+            progressBar.style.width = `${(completed / pending.length) * 100}%`;
 
             try {
-                const inputName = `input_${item.id}.${item.file.name.split('.').pop()}`;
+                const inputName = `input_${item.id}_${item.file.name}`;
                 const outputName = `output_${item.id}.${item.targetFormat}`;
-                
-                const inputData = await window.ffmpegFetchFile(item.file);
-                await ffmpeg.writeFile(inputName, inputData);
 
-                let ffmpegArgs;
+                await ffmpeg.writeFile(inputName, await fetchFile(item.file));
+
+                let args = ['-i', inputName];
                 if (item.targetFormat === 'gif') {
-                    ffmpegArgs = [
-                        '-i', inputName,
-                        '-vf', 'fps=15,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse',
-                        '-y', outputName
-                    ];
+                    args.push('-vf', 'fps=10,scale=320:-1:flags=lanczos', '-y', outputName);
                 } else if (item.targetFormat === 'mp4') {
-                    ffmpegArgs = ['-i', inputName, '-c:v', 'libx264', '-c:a', 'aac', '-y', outputName];
+                    args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', '28', '-c:a', 'aac', '-y', outputName);
                 } else {
-                    ffmpegArgs = ['-i', inputName, '-y', outputName];
+                    args.push('-y', outputName);
                 }
 
-                await ffmpeg.exec(ffmpegArgs);
+                await ffmpeg.exec(args);
 
                 const data = await ffmpeg.readFile(outputName);
-                const blob = new Blob([data], { type: `video/${item.targetFormat}` });
-                item.resultUrl = URL.createObjectURL(blob);
+                item.resultUrl = URL.createObjectURL(new Blob([data.buffer], { type: `video/${item.targetFormat}` }));
                 item.status = 'success';
                 item.progress = 100;
 
                 await ffmpeg.deleteFile(inputName);
                 await ffmpeg.deleteFile(outputName);
-
             } catch (err) {
                 console.error(err);
                 item.status = 'error';
-                item.error = err.message || 'Conversion failed';
+                item.error = 'Conversion failed';
             }
-            
+
             completed++;
-            updateGlobalProgress((completed / total) * 100);
-            if (batchProgressBar) batchProgressBar.style.width = `${(completed / total) * 100}%`;
             renderQueue();
         }
 
         isProcessing = false;
         processingStatus.classList.add('hidden');
-        document.getElementById('processing-details')?.classList.add('hidden');
+        progressBar.style.width = '100%';
         renderQueue();
     });
 
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            filesQueue = filesQueue.filter(f => f.status !== 'success' && f.status !== 'error');
-            if (filesQueue.length === 0) reset();
-            else renderQueue();
-        });
-    }
+    // Globals for buttons
+    window.removeItem = (id) => {
+        const item = filesQueue.find(f => f.id === id);
+        if (item && item.resultUrl) URL.revokeObjectURL(item.resultUrl);
+        filesQueue = filesQueue.filter(f => f.id !== id);
+        if (filesQueue.length === 0) reset();
+        else renderQueue();
+    };
 
-    if (downloadAllBtn) {
-        downloadAllBtn.addEventListener('click', async () => {
-            convertBtn.click();
-        });
-    }
+    window.downloadItem = (id) => {
+        const item = filesQueue.find(f => f.id === id);
+        if (item && item.resultUrl) {
+            const a = document.createElement('a');
+            a.href = item.resultUrl;
+            a.download = `converted_${item.file.name.split('.')[0]}.${item.targetFormat}`;
+            a.click();
+        }
+    };
 
-    function updateGlobalProgress(percent) {
-        if (progressBar) progressBar.style.width = `${percent}%`;
+    async function downloadAll() {
+        const successes = filesQueue.filter(f => f.status === 'success' && f.resultUrl);
+        if (successes.length === 0) return;
+        
+        const activeText = convertBtn.innerHTML;
+        convertBtn.disabled = true;
+        convertBtn.innerHTML = 'Zipping...';
+
+        try {
+            await LazyLoader.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+            const zip = new JSZip();
+            for (const item of successes) {
+                const response = await fetch(item.resultUrl);
+                const blob = await response.blob();
+                zip.file(`converted_${item.id}.${item.targetFormat}`, blob);
+            }
+            const content = await zip.generateAsync({ type: 'blob' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(content);
+            a.download = 'FileToolkitPro_Videos.zip';
+            a.click();
+        } catch (err) {
+            alert('Failed to create ZIP');
+        } finally {
+            convertBtn.disabled = false;
+            convertBtn.innerHTML = activeText;
+        }
     }
 
     function reset() {
-        filesQueue.forEach(item => {
-            if (item.resultUrl) URL.revokeObjectURL(item.resultUrl);
-        });
+        filesQueue.forEach(item => { if (item.resultUrl) URL.revokeObjectURL(item.resultUrl); });
         filesQueue = [];
         fileInput.value = '';
         dropZone.classList.remove('hidden');
         editorArea.classList.add('hidden');
         isProcessing = false;
-        updateGlobalProgress(0);
         renderQueue();
     }
 
     resetBtn.addEventListener('click', reset);
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+        filesQueue = filesQueue.filter(f => f.status !== 'success' && f.status !== 'error');
+        if (filesQueue.length === 0) reset();
+        else renderQueue();
+    });
 
-    function formatBytes(bytes, decimals = 2) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024, dm = 1, sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }

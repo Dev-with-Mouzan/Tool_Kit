@@ -163,7 +163,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             } else if (item.status === 'error') {
                 statusHTML = `<span class="px-2.5 py-1 rounded-full bg-red-500/10 text-red-600 text-[10px] font-bold uppercase tracking-widest border border-red-500/20">Failed</span>`;
-                actionHTML = `<button onclick="removeFile('${item.id}')" class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-red-500 flex items-center justify-center transition-all border border-slate-300 dark:border-slate-700" title="Remove"><span class="material-symbols-outlined text-base">delete</span></button>`;
+                actionHTML = `
+                    <div class="flex items-center gap-2">
+                        <button onclick="retryItem('${item.id}')" class="w-10 h-10 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-all border border-primary/30" title="Retry">
+                            <span class="material-symbols-outlined text-base">replay</span>
+                        </button>
+                        <button onclick="removeFile('${item.id}')" class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-red-500 flex items-center justify-center transition-all border border-slate-300 dark:border-slate-700" title="Remove">
+                            <span class="material-symbols-outlined text-base">delete</span>
+                        </button>
+                    </div>`;
             }
 
             const imgSrc = item.resultUrl || item.previewUrl;
@@ -192,6 +200,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.removeFile = removeFile;
+    window.retryItem = function(id) {
+        const item = processingQueue.find(i => i.id === id);
+        if (item) {
+            item.status = 'pending';
+            item.errorMsg = null;
+            updateUI();
+        }
+    };
     window.previewImage = function (url) {
         if (lightboxImg) lightboxImg.src = url;
         if (previewLightbox) {
@@ -200,25 +216,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    async function removeBackground(imageElement) {
-        if (!bgRemovalWorker) {
-            const { removeBackground } = await import('https://esm.sh/@imgly/background-removal@1.4.5');
-            bgRemovalWorker = removeBackground;
-        }
-        
-        const blob = await bgRemovalWorker(imageElement.src, {
-            progress: (key, current, total) => {
-                if (key === 'compute:inference') {
-                    console.log(`Inference progress: ${Math.round((current / total) * 100)}%`);
-                }
-            },
-            output: {
-                format: 'image/png',
-                quality: 1
+    let libBackgroundRemoval = null;
+
+    async function initAILibrary() {
+        if (!libBackgroundRemoval) {
+            try {
+                const mod = await import('https://esm.sh/@imgly/background-removal@1.4.5');
+                libBackgroundRemoval = {
+                    removeBackground: mod.removeBackground || mod.default,
+                    preload: mod.preload
+                };
+            } catch (err) {
+                console.error('Failed to load BG removal library:', err);
+                throw new Error('AI Library failed to load. Please check your connection.');
             }
-        });
-        
-        return blob;
+        }
+        return libBackgroundRemoval;
+    }
+
+    async function removeBackground(imageUrl) {
+        try {
+            const lib = await initAILibrary();
+            const blob = await lib.removeBackground(imageUrl, {
+                model: 'small',
+                progress: (key, current, total) => {
+                    if (key === 'compute:inference') {
+                        console.log(`Inference progress: ${Math.round((current / total) * 100)}%`);
+                    }
+                },
+                output: {
+                    format: 'image/png',
+                    quality: 0.8
+                }
+            });
+            return blob;
+        } catch (error) {
+            console.error('Background removal error:', error);
+            throw error;
+        }
     }
 
     processAllBtn.addEventListener('click', async () => {
@@ -226,18 +261,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (doneCount === processingQueue.length && processingQueue.length > 0) {
             processAllBtn.disabled = true;
             processAllBtn.innerHTML = '<span class="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span> Zipping...';
-            
+
             try {
                 await LazyLoader.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
-                const filesToZip = processingQueue.map(item => ({
-                    name: `no_bg_${item.file.name.split('.')[0]}.png`,
-                    blob: item.resultUrl
-                }));
-                if (typeof downloadAsZip === 'function') {
-                    await downloadAsZip(filesToZip, 'filetoolkit_bg_removed.zip');
-                } else {
-                    throw new Error('ZIP function missing');
+                const zip = new JSZip();
+                for (const item of processingQueue) {
+                    const response = await fetch(item.resultUrl);
+                    const blob = await response.blob();
+                    zip.file(`no_bg_${item.file.name.split('.')[0]}.png`, blob);
                 }
+                const content = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'filetoolkit_bg_removed.zip';
+                a.click();
+                URL.revokeObjectURL(url);
             } catch (err) {
                 console.error(err);
                 alert("Download failed: " + err.message);
@@ -250,6 +289,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isProcessing) return;
         const pendingItems = processingQueue.filter(item => item.status === 'pending');
         if (pendingItems.length === 0) return;
+
+        try {
+            processAllBtn.innerHTML = '<span class="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span> Preparing AI...';
+            const lib = await initAILibrary();
+            if (lib.preload) {
+                lib.preload({ model: 'small' }).catch(e => console.warn('Preload warning:', e));
+            }
+        } catch (importError) {
+            alert(importError.message);
+            resetButtonState();
+            return;
+        }
 
         isProcessing = true;
         const processingDetails = document.getElementById('processing-details');
@@ -287,32 +338,52 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUI();
 
             try {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
+                // Pre-process: Resize if image is too large for faster AI inference
+                let processedImageUrl = item.previewUrl;
+                const originalImage = new Image();
                 
-                const imageUrl = item.previewUrl;
-                img.src = imageUrl;
-                
+                // Fix: Attach listener BEFORE setting src to avoid race condition
                 await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = () => reject(new Error('Failed to load image'));
+                    originalImage.onload = resolve;
+                    originalImage.onerror = () => reject(new Error('Failed to load image for processing'));
+                    originalImage.src = item.previewUrl;
                 });
+                
+                const maxSize = 1024;
+                if (originalImage.width > maxSize || originalImage.height > maxSize) {
+                    const canvas = document.createElement('canvas');
+                    let width = originalImage.width;
+                    let height = originalImage.height;
+                    
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(originalImage, 0, 0, width, height);
+                    
+                    const resizedBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+                    processedImageUrl = URL.createObjectURL(resizedBlob);
+                }
 
-                const canvas = document.createElement('canvas');
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = img.naturalWidth;
-                tempCanvas.height = img.naturalHeight;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(img, 0, 0);
-
-                const blob = await removeBackground(tempCanvas);
+                const blob = await removeBackground(processedImageUrl);
 
                 item.resultUrl = URL.createObjectURL(blob);
                 item.status = 'done';
+                
+                if (processedImageUrl !== item.previewUrl) {
+                    URL.revokeObjectURL(processedImageUrl);
+                }
             } catch (error) {
                 console.error(`Error processing ${item.file.name}:`, error);
                 item.status = 'error';
@@ -333,4 +404,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (processingDetails) processingDetails.classList.add('hidden');
         }, 3000);
     });
+
+    // Initial background preload
+    initAILibrary().then(lib => {
+        if (lib && lib.preload) lib.preload({ model: 'small' }).catch(() => {});
+    }).catch(() => {});
 });

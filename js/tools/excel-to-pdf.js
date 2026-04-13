@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="flex items-center gap-2">
                     ${item.status === 'success' ? `
-                        <a href="${URL.createObjectURL(item.resultBlob)}" download="converted_${item.file.name.replace(/\.[^/.]+$/, '')}.${fileConfigs[currentConversion].targetLabel.toLowerCase()}" class="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all shadow-lg">
+                        <a href="${item.downloadUrl}" download="converted_${item.file.name.replace(/\.[^/.]+$/, '')}.${fileConfigs[currentConversion].targetLabel.toLowerCase()}" class="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all shadow-lg">
                             <span class="material-symbols-outlined text-lg">download</span>
                         </a>
                     ` : ''}
@@ -143,6 +143,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.removeFromQueue = (id) => {
+        const item = filesQueue.find(f => f.id === id);
+        if (item && item.downloadUrl) {
+            URL.revokeObjectURL(item.downloadUrl);
+        }
         filesQueue = filesQueue.filter(f => f.id !== id);
         if (filesQueue.length === 0) {
             resetTool();
@@ -163,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startTime = Date.now();
         let completed = 0;
 
-        if (!window.xlsx) {
+        if (!window.XLSX) {
             progressStage.textContent = 'Loading Excel library...';
             await LazyLoader.loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
         }
@@ -194,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.resultBlob = await convertPdfToXlsx(item.file);
                 }
                 item.status = 'success';
+                item.downloadUrl = URL.createObjectURL(item.resultBlob);
             } catch (error) {
                 item.status = 'error';
                 item.error = error.message || 'Conversion failed';
@@ -212,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function convertXlsxToPdf(file) {
         const { jsPDF } = window.jspdf;
         const data = await file.arrayBuffer();
-        const workbook = window.xlsx.read(data, { type: 'array' });
+        const workbook = window.XLSX.read(data, { type: 'array' });
 
         const pdf = new jsPDF({
             orientation: 'landscape',
@@ -231,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const sheetName = workbook.SheetNames[sheetIndex];
             const sheet = workbook.Sheets[sheetName];
-            const range = window.xlsx.utils.decode_range(sheet['!ref'] || 'A1');
+            const range = window.XLSX.utils.decode_range(sheet['!ref'] || 'A1');
 
             pdf.setFontSize(14);
             pdf.setFont('helvetica', 'bold');
@@ -244,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let row = range.s.r; row <= range.s.r + maxRows - 1 && row <= range.e.r; row++) {
                 let x = margin;
                 for (let col = range.s.c; col <= range.s.c + maxCols - 1 && col <= range.e.c; col++) {
-                    const cellRef = window.xlsx.utils.encode_cell({ r: row, c: col });
+                    const cellRef = window.XLSX.utils.encode_cell({ r: row, c: col });
                     const cell = sheet[cellRef];
                     let cellValue = cell?.v !== undefined ? String(cell.v) : (cell?.w || '');
                     const isHeader = row === range.s.r;
@@ -290,10 +295,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentRow.length > 0) allData.push(currentRow);
         }
 
-        const worksheet = window.xlsx.utils.aoa_to_sheet(allData);
-        const workbook = window.xlsx.utils.book_new();
-        window.xlsx.utils.book_append_sheet(workbook, worksheet, 'Extracted Data');
-        return window.xlsx.write(workbook, { bookType: 'xlsx', type: 'blob' });
+        const worksheet = window.XLSX.utils.aoa_to_sheet(allData);
+        const workbook = window.XLSX.utils.book_new();
+        window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Extracted Data');
+        const wbout = window.XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     }
 
     downloadAllBtn.addEventListener('click', async () => {
@@ -303,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (successes.length === 1) {
             const item = successes[0];
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(item.resultBlob);
+            a.href = item.downloadUrl;
             a.download = `converted_${item.file.name.replace(/\.[^/.]+$/, '')}.${fileConfigs[currentConversion].targetLabel.toLowerCase()}`;
             a.click();
             return;
@@ -330,6 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function resetTool() {
+        filesQueue.forEach(item => {
+            if (item.downloadUrl) URL.revokeObjectURL(item.downloadUrl);
+        });
         filesQueue = [];
         isProcessing = false;
         dropZone.classList.remove('hidden');

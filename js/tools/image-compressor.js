@@ -13,8 +13,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const etaDisplay = document.getElementById('eta-display');
     const batchProgressBar = document.getElementById('batch-progress-bar');
     const processingDetails = document.getElementById('processing-details');
+    const errorMessage = document.getElementById('error-message');
 
     let uploadedFiles = [];
+
+    function showError(message) {
+        const errorText = document.getElementById('error-text');
+        if (errorText) errorText.textContent = message;
+        if (errorMessage) {
+            errorMessage.classList.remove('hidden');
+            setTimeout(() => {
+                errorMessage.classList.add('hidden');
+            }, 5000);
+        }
+    }
 
     qualityRange.addEventListener('input', (e) => {
         qualityValue.textContent = `${e.target.value}%`;
@@ -61,6 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Hide error message when files are uploaded
+        if (errorMessage) errorMessage.classList.add('hidden');
+
         updateUI();
         resetButtonState();
     }
@@ -75,45 +90,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         fileList.innerHTML = uploadedFiles.map(item => `
-            <div class="group p-6 flex flex-col lg:flex-row items-center justify-between gap-6 transition-all hover:bg-slate-50 dark:hover:bg-slate-900/30 border-b border-slate-100 dark:border-slate-800 last:border-0 relative">
-                <div class="flex items-center gap-6 w-full lg:w-auto">
-                    <div class="relative group/thumb">
-                        <div class="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shrink-0 border-2 border-slate-200 dark:border-slate-700 shadow-sm group-hover/thumb:border-primary/50 transition-colors">
+            <div class="group p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:bg-slate-50 dark:hover:bg-slate-900/30 border-b border-slate-100 dark:border-slate-800 last:border-0 relative">
+                <div class="flex items-center gap-4 w-full sm:w-auto min-w-0">
+                    <div class="relative group/thumb shrink-0">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-slate-200 dark:border-slate-700 shadow-sm group-hover/thumb:border-primary/50 transition-colors">
                             <img src="${item.previewUrl}" class="w-full h-full object-cover">
                         </div>
                         ${item.status === 'complete' ? `
-                            <div class="absolute -top-2 -right-2 bg-green-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-900">
-                                <span class="material-symbols-outlined text-[10px] font-black">check</span>
+                            <div class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-green-500 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-900">
+                                <span class="material-symbols-outlined text-[8px] sm:text-[10px] font-black">check</span>
                             </div>
                         ` : ''}
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-slate-900 dark:text-white text-sm font-black truncate max-w-[200px]">${item.file.name}</p>
-                        <div class="flex items-center gap-2 mt-1">
+                    <div class="min-w-0 flex-1 overflow-hidden">
+                        <p class="text-slate-900 dark:text-white text-sm font-black truncate">${item.file.name}</p>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
                             <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">${(item.file.type.split('/')[1] || 'image').toUpperCase()}</span>
                             <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
                             <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">${formatBytes(item.originalSize)}</span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
+
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     ${item.status === 'complete' ? `
-                        <div class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800">
-                            <span class="text-[9px] text-slate-400 font-bold line-through">${formatBytes(item.originalSize)}</span>
-                            <span class="material-symbols-outlined text-slate-300 text-sm">arrow_forward</span>
+                        <div class="flex items-center justify-between sm:justify-end gap-3 bg-slate-100 dark:bg-slate-800/50 px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <span class="text-[10px] text-slate-400 font-bold line-through">${formatBytes(item.originalSize)}</span>
+                            <span class="material-symbols-outlined text-slate-300 text-sm hidden sm:block">arrow_forward</span>
                             <span class="text-xs text-primary font-black">${formatBytes(item.compressedSize)}</span>
-                            <span class="text-[9px] text-green-500 font-black">-${item.savingsPercent}%</span>
+                            <span class="text-[10px] text-green-500 font-black">-${item.savingsPercent}%</span>
                         </div>
-                        <a href="${item.downloadUrl}" download="compressed_${item.file.name}" class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-bold text-xs hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
-                            <span class="material-symbols-outlined text-sm">download</span>Download
+                        <a href="${item.downloadUrl}" download="compressed_${item.file.name}" class="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-primary text-white rounded-xl font-bold text-xs hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+                            <span class="material-symbols-outlined text-sm">download</span><span class="sm:hidden">Download</span>
                         </a>
                     ` : `
-                        <div class="flex items-center gap-3">
-                            ${item.status === 'pending' ? '<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ready</span>' : ''}
-                            ${item.status === 'processing' ? '<span class="text-[10px] font-bold text-primary uppercase tracking-widest animate-pulse">Processing...</span>' : ''}
-                            ${item.status === 'error' ? '<span class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Failed</span>' : ''}
-                            <button onclick="window.removeImage('${item.id}')" class="w-10 h-10 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 hover:border-red-500/30 rounded-xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                ${item.status === 'pending' ? '<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ready</span>' : ''}
+                                ${item.status === 'processing' ? '<span class="text-[10px] font-bold text-primary uppercase tracking-widest animate-pulse">Processing...</span>' : ''}
+                                ${item.status === 'error' ? '<span class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Failed</span>' : ''}
+                            </div>
+                            <button onclick="window.removeImage('${item.id}')" class="w-10 h-10 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 hover:border-red-500/30 rounded-xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
                                 <span class="material-symbols-outlined text-lg">delete</span>
                             </button>
                         </div>
@@ -148,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editorArea.classList.add('hidden');
         dropZoneContainer.classList.remove('hidden');
         fileInput.value = '';
+        if (errorMessage) errorMessage.classList.add('hidden');
         resetButtonState();
     }
 
@@ -156,6 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
     compressBtn.addEventListener('click', async () => {
         const completedCount = uploadedFiles.filter(f => f.status === 'complete').length;
         const totalCount = uploadedFiles.length;
+
+        // Check if no files uploaded
+        if (totalCount === 0) {
+            showError('No file uploaded. Please select an image first.');
+            return;
+        }
 
         if (completedCount === totalCount && totalCount > 0) {
             compressBtn.disabled = true;

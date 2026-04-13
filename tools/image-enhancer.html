@@ -58,11 +58,70 @@
     </nav>
 </aside>
 <main class="flex-1 flex flex-col overflow-hidden">
-    <header class="h-16 flex-shrink-0 flex items-center justify-between px-8 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 transition-colors">
-        <div class="flex items-center gap-2"><button id="mobile-menu-btn" class="lg:hidden text-slate-500 hover:text-slate-900 p-1"><span class="material-symbols-outlined">menu</span></button><span class="material-symbols-outlined text-accent">auto_fix_high</span><h2 class="font-bold text-base">AI Image Enhancer</h2></div>
-        <div class="flex items-center gap-3"><button onclick="toggleTheme()" class="theme-toggle-btn w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 hover:bg-primary/10 hover:text-primary transition-all"><span class="material-symbols-outlined text-slate-500 dark:text-slate-400">dark_mode</span></button><a href="../index.html" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 hover:bg-primary/10 transition-all"><span class="material-symbols-outlined text-slate-500 dark:text-slate-400">home</span></a></div>
+    <header class="h-16 flex-shrink-0 flex items-center justify-between px-4 lg:px-8 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 transition-colors">
+        <div class="flex items-center gap-2">
+            <button id="mobile-menu-btn" class="lg:hidden text-slate-500 hover:text-slate-900 p-1 flex items-center justify-center">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <span class="material-symbols-outlined text-accent">auto_fix_high</span>
+            <h2 class="font-bold text-base hidden sm:block">AI Image Enhancer</h2>
+            <h2 class="font-bold text-base sm:hidden">Enhancer</h2>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleTheme()" class="theme-toggle-btn w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 hover:bg-primary/10 hover:text-primary transition-all" title="Toggle Theme"><span class="material-symbols-outlined text-slate-500 dark:text-slate-400">dark_mode</span></button>
+            <a href="../index.html" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 hover:bg-primary/10 transition-all" title="Home"><span class="material-symbols-outlined text-slate-500 dark:text-slate-400">home</span></a>
+        </div>
     </header>
-    <div class="flex-1 overflow-y-auto p-8">
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="hidden fixed inset-0 z-[100] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl lg:hidden p-8 flex flex-col gap-10 animate-in fade-in duration-300">
+        <div class="flex items-center justify-between">
+            <a href="../index.html" class="flex items-center gap-2.5 group">
+                <svg class="w-10 h-10 drop-shadow-md" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logo-top-m" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient><linearGradient id="logo-left-m" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#4f46e5"/><stop offset="100%" stop-color="#3730a3"/></linearGradient><linearGradient id="logo-right-m" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#581c87"/></linearGradient></defs><path d="M256 96L112 176L256 256L400 176Z" fill="url(#logo-top-m)"/><path d="M112 176v160L256 416V256Z" fill="url(#logo-left-m)"/><path d="M400 176v160L256 416V256Z" fill="url(#logo-right-m)"/></svg>
+                <span class="text-slate-900 dark:text-white text-xl font-black">FileToolkitPro</span>
+            </a>
+            <button id="close-menu-btn" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div class="relative w-full">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">search</span>
+            <input id="mobile-search-input" class="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/50 focus:border-primary text-slate-900 dark:text-white text-sm transition-all" placeholder="Search tools...">
+        </div>
+
+        <nav class="flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
+            <a class="text-lg font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2" href="../index.html">Home</a>
+            
+            <div class="py-2"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Image Tools</span></div>
+            <div class="grid grid-cols-1 gap-1">
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="image-compressor.html"><span class="material-symbols-outlined text-[18px]">compress</span><span class="text-sm">Image Compressor</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="bg-remover.html"><span class="material-symbols-outlined text-[18px]">background_replace</span><span class="text-sm">Background Remover</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="social-media-resizer.html"><span class="material-symbols-outlined text-[18px]">aspect_ratio</span><span class="text-sm">Social Resizer</span></a>
+                <a class="flex items-center gap-3 text-primary font-bold bg-primary/5 p-2 rounded-lg transition-colors" href="image-enhancer.html"><span class="material-symbols-outlined text-[18px]">auto_fix_high</span><span class="text-sm">Image Enhancer</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="image-converter.html"><span class="material-symbols-outlined text-[18px]">sync_alt</span><span class="text-sm">Image Converter</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="passport-photo-maker.html"><span class="material-symbols-outlined text-[18px]">badge</span><span class="text-sm">Passport Photo</span></a>
+            </div>
+
+            <div class="py-2 mt-2"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">PDF & Documents</span></div>
+            <div class="grid grid-cols-1 gap-1">
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="image-to-pdf.html"><span class="material-symbols-outlined text-[18px]">picture_as_pdf</span><span class="text-sm">Image to PDF</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="pdf-compressor.html"><span class="material-symbols-outlined text-[18px]">minimize</span><span class="text-sm">PDF Compressor</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="pdf-merge.html"><span class="material-symbols-outlined text-[18px]">merge</span><span class="text-sm">PDF Merge</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="split-pdf.html"><span class="material-symbols-outlined text-[18px]">call_split</span><span class="text-sm">Split PDF</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="remove-pdf-page.html"><span class="material-symbols-outlined text-[18px]">delete_sweep</span><span class="text-sm">Remove PDF Page</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="word-to-pdf.html"><span class="material-symbols-outlined text-[18px]">article</span><span class="text-sm">Word to PDF</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="excel-to-pdf.html"><span class="material-symbols-outlined text-[18px]">table_chart</span><span class="text-sm">Excel to PDF</span></a>
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="excel-to-word.html"><span class="material-symbols-outlined text-[18px]">grid_on</span><span class="text-sm">Excel to Word</span></a>
+            </div>
+
+            <div class="py-2 mt-2"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Video Tools</span></div>
+            <div class="grid grid-cols-1 gap-1 mb-8">
+                <a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors" href="video-converter.html"><span class="material-symbols-outlined text-[18px]">video_file</span><span class="text-sm">Video Converter</span></a>
+            </div>
+        </nav>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4 md:p-8">
         <div class="max-w-4xl mx-auto flex flex-col lg:flex-row gap-8">
             <div id="unavailable-section" class="hidden flex-1 flex-col gap-6">
                 <div class="mb-4">
@@ -151,13 +210,19 @@
     </div>
     <footer class="h-12 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 text-[10px] text-slate-400 dark:text-slate-500 font-medium bg-white dark:bg-slate-950 transition-colors">
         <p>© <span id="ft-yr"></span> FileToolkitPro — All rights reserved.</p>
-        <a class="hover:text-primary transition-colors font-bold uppercase tracking-widest" href="../privacy.html">Privacy Policy</a>
+        <div class="flex items-center gap-4">
+            <a class="hover:text-primary transition-colors font-bold uppercase tracking-widest" href="../privacy-policy.html">Privacy Policy</a>
+            <a class="hover:text-primary transition-colors font-bold uppercase tracking-widest" href="../terms.html">Terms</a>
+        </div>
     </footer>
 </main>
 </div>
 <script src="../js/config.js"></script>
 <script src="../js/main.js"></script>
 <script src="../js/tools/image-enhancer.js"></script>
-<script>var e=document.getElementById("ft-yr");if(e)e.textContent=new Date().getFullYear();</script>
+    <script>
+        const yr = document.getElementById("ft-yr");
+        if(yr) yr.textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>

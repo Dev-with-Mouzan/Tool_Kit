@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="flex items-center gap-2">
                     ${item.status === 'success' ? `
-                        <a href="${URL.createObjectURL(item.resultBlob)}" download="converted_${item.file.name.replace(/\.[^/.]+$/, '')}.${fileConfigs[currentConversion].targetLabel.toLowerCase()}" class="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all shadow-lg">
+                        <a href="${item.downloadUrl}" download="converted_${item.file.name.replace(/\.[^/.]+$/, '')}.${fileConfigs[currentConversion].targetLabel.toLowerCase()}" class="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all shadow-lg">
                             <span class="material-symbols-outlined text-lg">download</span>
                         </a>
                     ` : ''}
@@ -141,6 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.removeFromQueue = (id) => {
+        const item = filesQueue.find(f => f.id === id);
+        if (item && item.downloadUrl) {
+            URL.revokeObjectURL(item.downloadUrl);
+        }
         filesQueue = filesQueue.filter(f => f.id !== id);
         if (filesQueue.length === 0) {
             resetTool();
@@ -161,13 +165,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const startTime = Date.now();
         let completed = 0;
 
-        if (!window.xlsx) {
+        if (!window.XLSX) {
             progressStage.textContent = 'Loading Excel library...';
             await LazyLoader.loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
         }
         if (!window.docx) {
             progressStage.textContent = 'Loading Word library...';
             await LazyLoader.loadScript('https://unpkg.com/docx@8.5.0/build/index.umd.js');
+        }
+        if (!window.JSZip) {
+            progressStage.textContent = 'Loading compression library...';
+            await LazyLoader.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
         }
 
         for (const item of pending) {
@@ -192,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.resultBlob = await convertDocxToXlsx(item.file);
                 }
                 item.status = 'success';
+                item.downloadUrl = URL.createObjectURL(item.resultBlob);
             } catch (error) {
                 item.status = 'error';
                 item.error = error.message || 'Conversion failed';
@@ -211,13 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, WidthType } = window.docx;
 
         const data = await file.arrayBuffer();
-        const workbook = window.xlsx.read(data, { type: 'array' });
+        const workbook = window.XLSX.read(data, { type: 'array' });
         const children = [];
 
         for (let sheetIndex = 0; sheetIndex < workbook.SheetNames.length; sheetIndex++) {
             const sheetName = workbook.SheetNames[sheetIndex];
             const sheet = workbook.Sheets[sheetName];
-            const range = window.xlsx.utils.decode_range(sheet['!ref'] || 'A1');
+            const range = window.XLSX.utils.decode_range(sheet['!ref'] || 'A1');
 
             children.push(
                 new Paragraph({
@@ -234,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let row = range.s.r; row <= range.s.r + maxRows - 1 && row <= range.e.r; row++) {
                 const tableCells = [];
                 for (let col = range.s.c; col <= range.s.c + maxCols - 1 && col <= range.e.c; col++) {
-                    const cellRef = window.xlsx.utils.encode_cell({ r: row, c: col });
+                    const cellRef = window.XLSX.utils.encode_cell({ r: row, c: col });
                     const cell = sheet[cellRef];
                     let cellValue = cell?.v !== undefined ? String(cell.v) : (cell?.w || '');
                     const isHeader = row === range.s.r;
@@ -265,34 +274,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function convertDocxToXlsx(file) {
-        const JSZip = window.JSZip || (await LazyLoader.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'), window.JSZip);
-
-        const zip = await JSZip.loadAsync(await file.arrayBuffer());
-        const documentXml = await zip.file('word/document.xml').async('string');
+        const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
+        const docFile = zip.file('word/document.xml');
+        if (!docFile) throw new Error('Invalid DOCX: Missing document.xml');
+        
+        const documentXml = await docFile.async('string');
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(documentXml, 'text/xml');
         const aoa = [];
 
         const rows = doc.getElementsByTagName('w:tr');
-        for (const row of rows) {
-            const rowData = [];
-            const cells = row.getElementsByTagName('w:tc');
-            for (const cell of cells) {
-                let cellText = '';
-                const texts = cell.getElementsByTagName('w:t');
-                for (const t of texts) {
-                    cellText += t.textContent || '';
+        if (rows.length > 0) {
+            for (const row of rows) {
+                const rowData = [];
+                const cells = row.getElementsByTagName('w:tc');
+                for (const cell of cells) {
+                    let cellText = '';
+                    const texts = cell.getElementsByTagName('w:t');
+                    for (const t of texts) {
+                        cellText += t.textContent || '';
+                    }
+                    rowData.push(cellText);
                 }
-                rowData.push(cellText);
+                if (rowData.length > 0) aoa.push(rowData);
             }
-            if (rowData.length > 0) aoa.push(rowData);
+        } else {
+            // Fallback: extract paragraphs as rows if no tables are found
+            const paragraphs = doc.getElementsByTagName('w:p');
+            for (const p of paragraphs) {
+                const texts = p.getElementsByTagName('w:t');
+                let pText = '';
+                for (const t of texts) {
+                    pText += t.textContent || '';
+                }
+                if (pText.trim()) aoa.push([pText.trim()]);
+            }
         }
 
-        const worksheet = window.xlsx.utils.aoa_to_sheet(aoa);
-        const workbook = window.xlsx.utils.book_new();
-        window.xlsx.utils.book_append_sheet(workbook, worksheet, 'Extracted Data');
-        return window.xlsx.write(workbook, { bookType: 'xlsx', type: 'blob' });
+        if (aoa.length === 0) aoa.push(['No content found in document']);
+
+        const worksheet = window.XLSX.utils.aoa_to_sheet(aoa);
+        const workbook = window.XLSX.utils.book_new();
+        window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Extracted Data');
+        
+        // Use binary string then convert to array buffer for better compatibility
+        const wbout = window.XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+        const buf = new ArrayBuffer(wbout.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i < wbout.length; i++) view[i] = wbout.charCodeAt(i) & 0xFF;
+        
+        return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     }
 
     downloadAllBtn.addEventListener('click', async () => {
@@ -302,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (successes.length === 1) {
             const item = successes[0];
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(item.resultBlob);
+            a.href = item.downloadUrl;
             a.download = `converted_${item.file.name.replace(/\.[^/.]+$/, '')}.${fileConfigs[currentConversion].targetLabel.toLowerCase()}`;
             a.click();
             return;
@@ -329,6 +361,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function resetTool() {
+        filesQueue.forEach(item => {
+            if (item.downloadUrl) URL.revokeObjectURL(item.downloadUrl);
+        });
         filesQueue = [];
         isProcessing = false;
         dropZone.classList.remove('hidden');
