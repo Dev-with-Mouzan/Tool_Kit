@@ -234,14 +234,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return libBackgroundRemoval;
     }
 
-    async function removeBackground(imageUrl) {
+    async function removeBackground(imageUrl, onProgress = () => {}) {
         try {
             const lib = await initAILibrary();
             const blob = await lib.removeBackground(imageUrl, {
+                publicPath: 'https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/',
                 model: 'small',
                 progress: (key, current, total) => {
                     if (key === 'compute:inference') {
-                        console.log(`Inference progress: ${Math.round((current / total) * 100)}%`);
+                        const percent = Math.round((current / total) * 100);
+                        console.log(`Inference progress: ${percent}%`);
+                        onProgress('inference', percent);
+                    } else if (key.startsWith('fetch:')) {
+                        const percent = Math.round((current / total) * 100);
+                        console.log(`Download progress: ${percent}%`);
+                        onProgress('download', percent);
                     }
                 },
                 output: {
@@ -291,14 +298,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pendingItems.length === 0) return;
 
         try {
-            processAllBtn.innerHTML = '<span class="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span> Preparing AI...';
+            processAllBtn.innerHTML = '<span class="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span> Loading AI Model (~40MB)...';
+            processAllBtn.disabled = true;
             const lib = await initAILibrary();
             if (lib.preload) {
-                lib.preload({ model: 'small' }).catch(e => console.warn('Preload warning:', e));
+                await lib.preload({
+                    publicPath: 'https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/',
+                    model: 'small',
+                    progress: (key, current, total) => {
+                        if (key.startsWith('fetch:')) {
+                            const percent = Math.round((current / total) * 100);
+                            processAllBtn.innerHTML = `<span class="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span> Downloading Model ${percent}%`;
+                        }
+                    }
+                });
             }
         } catch (importError) {
+            console.error(importError);
             alert(importError.message);
             resetButtonState();
+            processAllBtn.disabled = false;
             return;
         }
 
@@ -376,7 +395,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     processedImageUrl = URL.createObjectURL(resizedBlob);
                 }
 
-                const blob = await removeBackground(processedImageUrl);
+                const blob = await removeBackground(processedImageUrl, (stage, percent) => {
+                    if (stage === 'inference') {
+                        processAllBtn.innerHTML = `<span class="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span> AI Processing ${percent}%`;
+                    }
+                });
 
                 item.resultUrl = URL.createObjectURL(blob);
                 item.status = 'done';
@@ -407,6 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial background preload
     initAILibrary().then(lib => {
-        if (lib && lib.preload) lib.preload({ model: 'small' }).catch(() => {});
+        if (lib && lib.preload) lib.preload({ publicPath: 'https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/', model: 'small' }).catch(() => {});
     }).catch(() => {});
 });
