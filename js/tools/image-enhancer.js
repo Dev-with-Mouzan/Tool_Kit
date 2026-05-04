@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Tool is coming soon - disable all functionality
+    return;
+    
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
     const uploadSection = document.getElementById('upload-section');
